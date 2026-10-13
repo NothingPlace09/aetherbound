@@ -27,8 +27,14 @@ return [
         'password_hash' => '$2y$10$5MnJadwKQUXFM9AbfhBgFuEjm5ueUXD0nHuJkTnHBqPzsk31TMz2O',
     ],
 
-    // Profile picture = face of the member's Minecraft skin, looked up by username.
-    // {name} = username, {size} = pixels. Any service with this URL shape works (e.g. https://minotar.net/helm/{name}/{size}.png).
+    // Profile picture = face of the member's Minecraft skin (see includes/skin.php and skin.php).
+    // The server asks Mojang directly; these are the addresses it uses (you normally never change them).
+    'skin_apis' => [
+        'profile'        => ['https://api.mojang.com/users/profiles/minecraft/{name}', 'https://api.minecraftservices.com/minecraft/profile/lookup/name/{name}', 'https://playerdb.co/api/player/minecraft/{name}'],
+        'session'        => 'https://sessionserver.mojang.com/session/minecraft/profile/{uuid}',
+        'skin_fallbacks' => ['https://crafatar.com/skins/{uuid}', 'https://mc-heads.net/skin/{uuid}'],
+    ],
+    // Only used if the host has no PHP "gd" extension: public avatar service ({name} = the UUID, {size} = pixels)
     'skin_face_url' => 'https://mc-heads.net/avatar/{name}/{size}',
 
     // About-me text: max characters (it can contain formatting codes)

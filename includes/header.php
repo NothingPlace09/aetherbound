@@ -19,7 +19,7 @@ $user = current_user();
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700&family=JetBrains+Mono:wght@600;700&family=Lilita+One&display=swap">
-<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="<?= e(asset_url('assets/css/style.css')) ?>">
 </head>
 <body>
 <script>try{if(sessionStorage.getItem("aeth_pre")){document.documentElement.classList.add("no-preload");}}catch(e){}</script>
@@ -32,7 +32,7 @@ $user = current_user();
 </div>
 
 <?php if ($withBg): ?>
-<div class="bg-top" aria-hidden="true"><div class="bg-img" id="bgimg"></div><div class="bg-shade"></div></div>
+<div class="bg-top<?= $page === 'home' ? '' : ' sub' ?>" aria-hidden="true"><div class="bg-img" id="bgimg"></div><div class="bg-shade"></div></div>
 <?php endif; ?>
 <canvas id="embers" aria-hidden="true"></canvas>
 <div class="progress" id="progress" aria-hidden="true"></div>

@@ -35,9 +35,9 @@ window.AETHER = <?= json_encode([
     'soon'     => t('discord_soon'),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?>;
 </script>
-<script src="assets/js/main.js"></script>
+<script src="<?= e(asset_url('assets/js/main.js')) ?>"></script>
 <?php if (!empty($extraScripts)): foreach ($extraScripts as $src): ?>
-<script src="<?= e($src) ?>"></script>
+<script src="<?= e(asset_url($src)) ?>"></script>
 <?php endforeach; endif; ?>
 </body>
 </html>

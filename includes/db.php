@@ -2,7 +2,7 @@
 // Local database: a single SQLite file stored in /database (created on first use).
 // Needs the PHP extension pdo_sqlite, which XAMPP enables by default.
 // The schema is versioned with PRAGMA user_version: older databases are upgraded automatically.
-const DB_SCHEMA_VERSION = 2;
+const DB_SCHEMA_VERSION = 4;
 
 function db()
 {
@@ -41,7 +41,8 @@ function db_migrate(PDO $pdo)
     $pdo->exec('BEGIN IMMEDIATE');
     try {
         // Another request may have finished the upgrade while we waited for the lock.
-        if (db_current_version($pdo) >= DB_SCHEMA_VERSION) {
+        $from = db_current_version($pdo);
+        if ($from >= DB_SCHEMA_VERSION) {
             $pdo->exec('COMMIT');
             return;
         }
@@ -100,8 +101,71 @@ function db_migrate(PDO $pdo)
             }
         }
 
-        $config = require __DIR__ . '/config.php';
-        db_seed_admin($pdo, $config['admin_seed']);
+        // News posts (schema 3). category: news | update | event. published 0 = draft (admins only).
+        $pdo->exec('CREATE TABLE IF NOT EXISTS news (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            title      TEXT NOT NULL,
+            excerpt    TEXT NOT NULL DEFAULT \'\',
+            body       TEXT NOT NULL DEFAULT \'\',
+            category   TEXT NOT NULL DEFAULT \'news\',
+            image      TEXT,
+            published  INTEGER NOT NULL DEFAULT 1,
+            author_id  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            views      INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT
+        )');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS news_created ON news (created_at)');
+        $pdo->exec('CREATE TABLE IF NOT EXISTS news_likes (
+            news_id INTEGER NOT NULL REFERENCES news(id) ON DELETE CASCADE,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            PRIMARY KEY (news_id, user_id)
+        )');
+
+        // Rules page (schema 4): categories > sections > rules, written in English and Italian.
+        // kind 'rules' = numbered list of rules, kind 'table' = a table (cells separated by |, first line = header).
+        $pdo->exec('CREATE TABLE IF NOT EXISTS rule_cats (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            slug       TEXT NOT NULL UNIQUE,
+            grp_en     TEXT NOT NULL DEFAULT \'\',
+            grp_it     TEXT NOT NULL DEFAULT \'\',
+            title_en   TEXT NOT NULL,
+            title_it   TEXT NOT NULL DEFAULT \'\',
+            sub_en     TEXT NOT NULL DEFAULT \'\',
+            sub_it     TEXT NOT NULL DEFAULT \'\',
+            icon       TEXT NOT NULL DEFAULT \'shield\',
+            sort       INTEGER NOT NULL DEFAULT 0,
+            updated_at TEXT
+        )');
+        $pdo->exec('CREATE TABLE IF NOT EXISTS rule_secs (
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            cat_id   INTEGER NOT NULL REFERENCES rule_cats(id) ON DELETE CASCADE,
+            kind     TEXT NOT NULL DEFAULT \'rules\',
+            title_en TEXT NOT NULL DEFAULT \'\',
+            title_it TEXT NOT NULL DEFAULT \'\',
+            table_en TEXT NOT NULL DEFAULT \'\',
+            table_it TEXT NOT NULL DEFAULT \'\',
+            sort     INTEGER NOT NULL DEFAULT 0
+        )');
+        $pdo->exec('CREATE TABLE IF NOT EXISTS rule_items (
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            sec_id   INTEGER NOT NULL REFERENCES rule_secs(id) ON DELETE CASCADE,
+            title_en TEXT NOT NULL DEFAULT \'\',
+            title_it TEXT NOT NULL DEFAULT \'\',
+            text_en  TEXT NOT NULL DEFAULT \'\',
+            text_it  TEXT NOT NULL DEFAULT \'\',
+            sort     INTEGER NOT NULL DEFAULT 0
+        )');
+        if ($from < 4 && !(int) $pdo->query('SELECT COUNT(*) FROM rule_cats')->fetchColumn()) {
+            require_once __DIR__ . '/rules.php';
+            rules_seed($pdo); // first time only: fills the tables with the starting rules from rules_data.php
+        }
+
+        // The admin account is only seeded on the first setup, so upgrades never reset its password.
+        if ($from < 2) {
+            $config = require __DIR__ . '/config.php';
+            db_seed_admin($pdo, $config['admin_seed']);
+        }
 
         $pdo->exec('PRAGMA user_version = ' . DB_SCHEMA_VERSION);
         $pdo->exec('COMMIT');

@@ -3,6 +3,8 @@
 $config = require __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/markdown.php';
+require_once __DIR__ . '/layout.php';
+require_once __DIR__ . '/rules.php';
 
 /* ---- Language: ?lang=xx sets a cookie, then falls back to cookie, browser, default ---- */
 $languages = $config['languages'];
@@ -112,11 +114,11 @@ function discord_stats(array $config)
 
 /* ---- Profile helpers ---- */
 
-/* Picture of a member: the face of their Minecraft skin, found by username. Works on any row with a "username" key. */
+/* Picture of a member: the face of their Minecraft skin, served by skin.php. Works on any row with a "username" key. */
 function avatar_url(array $u, $size = 128)
 {
     if (!empty($u['username']) && preg_match('/^[A-Za-z0-9_]{1,16}$/', $u['username'])) {
-        return str_replace(['{name}', '{size}'], [rawurlencode($u['username']), (int) $size], $GLOBALS['config']['skin_face_url']);
+        return 'skin.php?u=' . rawurlencode($u['username']) . '&s=' . (int) $size;
     }
     return 'assets/img/head.webp';
 }
