@@ -10,6 +10,7 @@
   var tabs = box.querySelectorAll("[data-mdx-tab]");
   var counter = document.querySelector("[data-mdx-count]");
   var max = parseInt(box.getAttribute("data-max"), 10) || 1500;
+  var icons = box.querySelector("[data-mdx-icons]");
   var savedSel = null;
 
   /* Replace a range through execCommand so Ctrl+Z still works; fall back to setRangeText. */
@@ -80,6 +81,9 @@
       var ins = pre + "---\n";
       replace(s, s, ins, s + ins.length, s + ins.length);
     },
+    icon: function () {
+      if (icons) icons.hidden = !icons.hidden;
+    },
     color: function () {
       savedSel = [ta.selectionStart, ta.selectionEnd];
       if (picker.showPicker) { try { picker.showPicker(); return; } catch (e) {} }
@@ -103,6 +107,24 @@
     if (fn) fn();
   });
 
+  var iconColor = null; /* null = default colour; otherwise "#rrggbb" is added to the code */
+  if (icons) {
+    var colorIn = icons.querySelector("[data-icon-color]"), colorOff = icons.querySelector("[data-icon-nocolor]");
+    var paint = function () {
+      icons.querySelectorAll("button[data-icon]").forEach(function (b) { b.style.color = iconColor || ""; });
+      if (colorOff) colorOff.hidden = !iconColor;
+    };
+    if (colorIn) colorIn.addEventListener("input", function () { iconColor = colorIn.value; paint(); });
+    if (colorOff) colorOff.addEventListener("click", function () { iconColor = null; paint(); });
+    icons.addEventListener("mousedown", function (e) { if (e.target.closest("button")) e.preventDefault(); });
+    icons.addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-icon]");
+      if (!b || box.classList.contains("previewing")) return;
+      var s = ta.selectionStart, ins = ":" + b.getAttribute("data-icon") + (iconColor ? iconColor : "") + ": ";
+      replace(s, ta.selectionEnd, ins, s + ins.length, s + ins.length);
+    });
+  }
+
   ta.addEventListener("keydown", function (e) {
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
       var k = e.key.toLowerCase();
@@ -124,6 +146,7 @@
     box.classList.toggle("previewing", prev);
     tabs.forEach(function (t) { t.setAttribute("aria-selected", t.getAttribute("data-mdx-tab") === which ? "true" : "false"); });
     tools.querySelectorAll("button").forEach(function (b) { b.disabled = prev; });
+    if (icons && prev) icons.hidden = true;
     ta.hidden = prev;
     preview.hidden = !prev;
     if (!prev) { ta.focus(); return; }
@@ -133,6 +156,7 @@
     var body = new URLSearchParams();
     body.set("csrf", box.getAttribute("data-csrf"));
     body.set("text", ta.value);
+    body.set("kind", box.getAttribute("data-kind") || "");
     fetch(box.getAttribute("data-preview-url"), {
       method: "POST", credentials: "same-origin",
       headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body.toString()
