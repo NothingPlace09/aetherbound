@@ -3,11 +3,12 @@
 $page = 'admin';
 require __DIR__ . '/includes/bootstrap.php';
 require_once __DIR__ . '/includes/avatar.php';
+require_once __DIR__ . '/includes/news.php';
 ensure_session(true);
 $me = require_admin();
 $pdo = db();
 
-$tab = isset($_GET['tab']) && $_GET['tab'] === 'users' ? 'users' : 'roles';
+$tab = isset($_GET['tab']) && in_array($_GET['tab'], ['users', 'news', 'rules'], true) ? $_GET['tab'] : 'roles';
 $perPage = 20;
 
 function valid_role_name($n)
@@ -71,6 +72,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     flash($n->rowCount() ? 'ok' : 'err', $n->rowCount() ? 'ok_role_deleted' : 'err_notfound');
                     break;
 
+                case 'rules_cat_delete':
+                    $back = 'admin.php?tab=rules';
+                    $n = $pdo->prepare('DELETE FROM rule_cats WHERE id = ?');
+                    $n->execute([$id]);
+                    flash($n->rowCount() ? 'ok' : 'err', $n->rowCount() ? 'ok_rules_deleted' : 'err_notfound');
+                    break;
+
+                case 'news_delete':
+                    $back = 'admin.php?tab=news';
+                    $st = $pdo->prepare('SELECT image FROM news WHERE id = ?');
+                    $st->execute([$id]);
+                    $old = $st->fetch();
+                    $n = $pdo->prepare('DELETE FROM news WHERE id = ?');
+                    $n->execute([$id]);
+                    if ($n->rowCount()) {
+                        news_image_delete($old['image']);
+                    }
+                    flash($n->rowCount() ? 'ok' : 'err', $n->rowCount() ? 'ok_news_deleted' : 'err_notfound');
+                    break;
+
+                case 'news_toggle':
+                    $back = 'admin.php?tab=news';
+                    $n = $pdo->prepare('UPDATE news SET published = 1 - published WHERE id = ?');
+                    $n->execute([$id]);
+                    flash($n->rowCount() ? 'ok' : 'err', $n->rowCount() ? 'ok_news_saved' : 'err_notfound');
+                    break;
+
                 case 'user_role':
                     $back = 'admin.php?tab=users' . (isset($_POST['back']) ? $_POST['back'] : '');
                     $roleId = isset($_POST['role_id']) && $_POST['role_id'] !== '' ? (int) $_POST['role_id'] : null;
@@ -110,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     // $back only ever contains our own "&q=..&p=.." suffix (see the forms below): keep it harmless.
-    if (!preg_match('/^admin\.php\?tab=(roles|users)(&(q|p)=[^&\s]*)*$/', $back)) {
+    if (!preg_match('/^admin\.php\?tab=(roles|users|news|rules)(&(q|p)=[^&\s]*)*$/', $back)) {
         $back = 'admin.php?tab=roles';
     }
     redirect($back);
@@ -121,6 +149,22 @@ $countUsers = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
 $countRoles = (int) $pdo->query('SELECT COUNT(*) FROM roles')->fetchColumn();
 $roles = $pdo->query('SELECT r.id, r.name, r.color, r.kind, r.priority, (SELECT COUNT(*) FROM users u WHERE u.role_id = r.id) AS members
     FROM roles r ORDER BY (r.kind = \'staff\') DESC, r.priority DESC, r.name COLLATE NOCASE')->fetchAll();
+
+$countNews = (int) $pdo->query('SELECT COUNT(*) FROM news')->fetchColumn();
+$newsRows = [];
+if ($tab === 'news') {
+    $newsRows = $pdo->query('SELECT n.id, n.title, n.category, n.image, n.published, n.views, n.created_at,
+            (SELECT COUNT(*) FROM news_likes l WHERE l.news_id = n.id) AS likes
+        FROM news n ORDER BY n.created_at DESC, n.id DESC LIMIT 200')->fetchAll();
+}
+
+$ruleCats = [];
+if ($tab === 'rules') {
+    $ruleCats = $pdo->query('SELECT c.id, c.slug, c.grp_en, c.title_en, c.icon, c.sort, c.updated_at,
+            (SELECT COUNT(*) FROM rule_secs s WHERE s.cat_id = c.id) AS secs,
+            (SELECT COUNT(*) FROM rule_items i JOIN rule_secs s ON s.id = i.sec_id WHERE s.cat_id = c.id) AS items
+        FROM rule_cats c ORDER BY c.sort, c.id')->fetchAll();
+}
 
 $q = isset($_GET['q']) && is_string($_GET['q']) ? trim(mb_substr($_GET['q'], 0, 60, 'UTF-8')) : '';
 $p = isset($_GET['p']) ? max(1, (int) $_GET['p']) : 1;
@@ -173,11 +217,14 @@ $csrf = csrf_token();
     <div class="stats admin-stats">
       <div class="stat"><strong><?= $countUsers ?></strong><span><?= e(t('ad_stat_users')) ?></span></div>
       <div class="stat"><strong><?= $countRoles ?></strong><span><?= e(t('ad_stat_roles')) ?></span></div>
+      <div class="stat"><strong><?= $countNews ?></strong><span><?= e(t('ad_stat_news')) ?></span></div>
     </div>
 
     <div class="tabs admin-tabs">
       <a class="tab" href="admin.php?tab=roles" aria-selected="<?= $tab === 'roles' ? 'true' : 'false' ?>"><?= e(t('ad_tab_roles')) ?></a>
       <a class="tab" href="admin.php?tab=users" aria-selected="<?= $tab === 'users' ? 'true' : 'false' ?>"><?= e(t('ad_tab_users')) ?></a>
+      <a class="tab" href="admin.php?tab=rules" aria-selected="<?= $tab === 'rules' ? 'true' : 'false' ?>"><?= e(t('ad_tab_rules')) ?></a>
+      <a class="tab" href="admin.php?tab=news" aria-selected="<?= $tab === 'news' ? 'true' : 'false' ?>"><?= e(t('ad_tab_news')) ?></a>
     </div>
 
 <?php if ($tab === 'roles'): ?>
@@ -244,6 +291,80 @@ $csrf = csrf_token();
             <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
             <button class="btn sm danger" type="submit"><?= e(t('ad_role_delete')) ?></button>
           </form>
+        </div>
+      <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+
+<?php elseif ($tab === 'rules'): ?>
+    <div class="admin-bar"><a class="btn sm" href="admin-rules.php">+ <?= e(t('ar_new_cat')) ?></a><a class="link-soft" href="rules.php"><?= e(t('ar_view_page')) ?> →</a></div>
+    <p class="hint admin-hint"><?= e(t('ar_list_hint')) ?></p>
+
+    <?php if (!$ruleCats): ?>
+      <div class="panel empty-panel"><?= e(t('ar_none')) ?></div>
+    <?php else: ?>
+      <div class="news-admin">
+      <?php foreach ($ruleCats as $rc): ?>
+        <div class="panel news-row rule-row">
+          <span class="rn-ic"><?= page_icon($rc['icon'], 16) ?></span>
+          <div class="nr-info">
+            <a class="nr-title" href="admin-rules.php?id=<?= (int) $rc['id'] ?>"><?= e($rc['title_en']) ?></a>
+            <div class="nr-meta">
+              <?php if ($rc['grp_en'] !== ''): ?><span class="news-tag"><?= e($rc['grp_en']) ?></span><?php endif; ?>
+              <span><?= (int) $rc['secs'] ?> <?= e(t('ar_sections')) ?></span>
+              <span><?= (int) $rc['items'] ?> <?= e(t('ar_rules')) ?></span>
+              <span>#<?= (int) $rc['sort'] ?></span>
+            </div>
+          </div>
+          <div class="nr-actions">
+            <a class="btn sm white" href="admin-rules.php?id=<?= (int) $rc['id'] ?>"><?= e(t('ad_news_edit_btn')) ?></a>
+            <form method="post" action="admin.php?tab=rules" data-confirm="<?= e(t('ar_delete_cat_q')) ?>">
+              <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
+              <input type="hidden" name="action" value="rules_cat_delete">
+              <input type="hidden" name="id" value="<?= (int) $rc['id'] ?>">
+              <button class="btn sm danger" type="submit"><?= e(t('ad_news_delete')) ?></button>
+            </form>
+          </div>
+        </div>
+      <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+
+<?php elseif ($tab === 'news'): ?>
+    <div class="admin-bar"><a class="btn sm" href="admin-news.php">+ <?= e(t('ad_news_new')) ?></a></div>
+
+    <?php if (!$newsRows): ?>
+      <div class="panel empty-panel"><?= e(t('ad_news_none')) ?></div>
+    <?php else: ?>
+      <div class="news-admin">
+      <?php foreach ($newsRows as $n): $nimg = news_image_url($n); ?>
+        <div class="panel news-row">
+          <div class="nr-thumb<?= $nimg ? '' : ' none' ?>"><img src="<?= e($nimg ? $nimg : 'assets/img/head.webp') ?>" alt="" width="96" height="60" loading="lazy"></div>
+          <div class="nr-info">
+            <a class="nr-title" href="news.php?id=<?= (int) $n['id'] ?>"><?= e($n['title']) ?></a>
+            <div class="nr-meta">
+              <span class="news-tag"><?= e(t('cat_' . news_clean_category($n['category']))) ?></span>
+              <span class="news-tag <?= $n['published'] ? 'live' : 'draft' ?>"><?= e(t($n['published'] ? 'ad_news_live' : 'news_draft')) ?></span>
+              <span><?= e(news_date($n['created_at'])) ?></span>
+              <span class="news-stat"><?= news_icon('eye') ?><?= (int) $n['views'] ?></span>
+              <span class="news-stat"><?= news_icon('heart') ?><?= (int) $n['likes'] ?></span>
+            </div>
+          </div>
+          <div class="nr-actions">
+            <a class="btn sm white" href="admin-news.php?id=<?= (int) $n['id'] ?>"><?= e(t('ad_news_edit_btn')) ?></a>
+            <form method="post" action="admin.php?tab=news">
+              <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
+              <input type="hidden" name="action" value="news_toggle">
+              <input type="hidden" name="id" value="<?= (int) $n['id'] ?>">
+              <button class="btn sm white" type="submit"><?= e(t($n['published'] ? 'ad_news_unpublish' : 'ad_news_publish')) ?></button>
+            </form>
+            <form method="post" action="admin.php?tab=news" data-confirm="<?= e(t('ad_news_delete_q')) ?>">
+              <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
+              <input type="hidden" name="action" value="news_delete">
+              <input type="hidden" name="id" value="<?= (int) $n['id'] ?>">
+              <button class="btn sm danger" type="submit"><?= e(t('ad_news_delete')) ?></button>
+            </form>
+          </div>
         </div>
       <?php endforeach; ?>
       </div>

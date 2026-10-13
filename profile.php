@@ -2,6 +2,7 @@
 // My profile: where members land after logging in or signing up.
 $page = 'profile';
 require __DIR__ . '/includes/bootstrap.php';
+require_once __DIR__ . '/includes/skin.php';
 ensure_session(true); // open the session before any output (CSRF token + flash messages)
 $me = require_login();
 
@@ -39,6 +40,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $col = $action === 'about_remove' ? 'bio' : 'signature';
                     $pdo->prepare('UPDATE users SET ' . $col . " = '' WHERE id = ?")->execute([$me['id']]);
                     flash('ok', 'ok_' . $action);
+                    break;
+
+                case 'skin_refresh':
+                    $anchor = '#public';
+                    skin_forget($me['username']);
+                    skin_lookup($me['username'], true);
+                    flash('ok', 'ok_skin_refresh');
                     break;
 
                 case 'password':
@@ -178,7 +186,13 @@ $extraScripts = ['assets/js/editor.js'];
           <?= avatar_img($me, 112, 'photo-big') ?>
           <strong class="skin-name"><?= e($me['username']) ?></strong>
         </div>
+        <?php $skin = skin_lookup($me['username']); ?>
+        <p class="skin-status <?= $skin['state'] ?>"><?= e(sprintf(t('sk_' . $skin['state']), $me['username'])) ?></p>
         <p class="hint"><?= e(t('pf_skin_hint')) ?></p>
+        <form method="post" action="profile.php#public" class="actions">
+          <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
+          <button class="btn sm white" type="submit" name="action" value="skin_refresh"><?= e(t('sk_refresh')) ?></button>
+        </form>
       </div>
     </div>
 

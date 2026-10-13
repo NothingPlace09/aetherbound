@@ -21,19 +21,13 @@ try {
     $groups = [];
 }
 
+$withBg = true;
 $pageTitle = t('nav_staff');
 require __DIR__ . '/includes/header.php';
 ?>
 <main>
-  <div class="wrap page staff-page">
-    <div class="page-head">
-      <span class="auth-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8 7.5 9.5 4.4-1.5 7.5-4.9 7.5-9.5V6L12 3Z"/></svg>
-        <?= e(t('staff_page_badge')) ?>
-      </span>
-      <h1><?= e(t('staff_page_title')) ?></h1>
-      <p><?= e(sprintf(t('staff_page_sub'), $config['site_name'])) ?></p>
-    </div>
+  <div class="wrap staff-page">
+    <?= page_banner('staff_page_badge', 'staff_page_title', 'staff_page_sub', $config['site_name'], 'users') ?>
 
 <?php if (!$groups): ?>
     <div class="panel empty-panel"><?= e(t('staff_empty')) ?></div>
