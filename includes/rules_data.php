@@ -9,9 +9,11 @@
 //   'table' => ['head' => [L(..), ...], 'rows' => [[L(..), L(..), ...], ...]]   (used by the durations)
 // 'updated' is the "last updated" date of the category (YYYY-MM-DD).
 
-function L($en, $it = null)
-{
-    return ['en' => $en, 'it' => $it !== null ? $it : $en];
+if (!function_exists('L')) {
+    function L($en, $it = null)
+    {
+        return ['en' => $en, 'it' => $it !== null ? $it : $en];
+    }
 }
 
 /* Picks the visitor's language (English if that text has no translation). */

@@ -2,7 +2,7 @@
 // Local database: a single SQLite file stored in /database (created on first use).
 // Needs the PHP extension pdo_sqlite, which XAMPP enables by default.
 // The schema is versioned with PRAGMA user_version: older databases are upgraded automatically.
-const DB_SCHEMA_VERSION = 4;
+const DB_SCHEMA_VERSION = 5;
 
 function db()
 {
@@ -160,6 +160,17 @@ function db_migrate(PDO $pdo)
             require_once __DIR__ . '/rules.php';
             rules_seed($pdo); // first time only: fills the tables with the starting rules from rules_data.php
         }
+
+        // Staff applications (schema 5): a record of every application sent to Discord (also used for the cooldown).
+        $pdo->exec('CREATE TABLE IF NOT EXISTS applications (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            code       TEXT NOT NULL UNIQUE,
+            user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            role       TEXT NOT NULL,
+            answers    TEXT NOT NULL DEFAULT \'\',
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_applications_user ON applications(user_id, role, created_at)');
 
         // The admin account is only seeded on the first setup, so upgrades never reset its password.
         if ($from < 2) {

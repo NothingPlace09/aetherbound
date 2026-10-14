@@ -23,6 +23,17 @@ function page_icon($name, $size = 14)
         'ban'    => '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>',
         'mute'   => '<path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="m17 9 4 6m0-6-4 6"/>',
         'cube'   => '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
+        'star'   => '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3Z"/>',
+        'alert'  => '<path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 10v4M12 17.4v.2"/>',
+        'bell'   => '<path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9Z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+        'code'   => '<path d="m5 8 4 4-4 4M12 17h7"/>',
+        'heart'  => '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/>',
+        'back'   => '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+        'next'   => '<path d="M5 12h14M13 6l6 6-6 6"/>',
+        'check'  => '<path d="m5 12 4.5 4.5L19 7"/>',
+        'x'      => '<path d="M6 6l12 12M18 6 6 18"/>',
+        'flame'  => '<path d="M12 3c1 3.5 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .2 1.5 1 2 1.8 2C10.5 8 11 5.5 12 3Z"/>',
+        'info'   => '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.2"/>',
         'clock'  => '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     ];
     $path = isset($icons[$name]) ? $icons[$name] : $icons['shield'];

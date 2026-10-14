@@ -5,6 +5,7 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/markdown.php';
 require_once __DIR__ . '/layout.php';
 require_once __DIR__ . '/rules.php';
+require_once __DIR__ . '/apply.php';
 
 /* ---- Language: ?lang=xx sets a cookie, then falls back to cookie, browser, default ---- */
 $languages = $config['languages'];

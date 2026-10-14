@@ -37,6 +37,14 @@ return [
     // Only used if the host has no PHP "gd" extension: public avatar service ({name} = the UUID, {size} = pixels)
     'skin_face_url' => 'https://mc-heads.net/avatar/{name}/{size}',
 
+    // Staff applications are sent to a Discord channel through a webhook.
+    // The webhook address is a SECRET (whoever has it can post in your channel): set it as the environment variable
+    // APPLY_WEBHOOK_URL (Coolify -> your app -> Environment Variables). Never write it in a file that goes to GitHub.
+    'apply_webhook'        => (string) getenv('APPLY_WEBHOOK_URL'),
+    'apply_min_age'        => 14,   // younger applicants get an error
+    'apply_cooldown_hours' => 24,   // the same member can apply for the same role again after this time
+    'apply_daily_limit'    => 3,    // applications per member in 24 hours (all roles together)
+
     // About-me text: max characters (it can contain formatting codes)
     'about_max' => 1500,
 
