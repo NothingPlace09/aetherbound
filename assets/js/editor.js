@@ -1,5 +1,3 @@
-/* Profile text editor: WRITE / PREVIEW tabs and a formatting toolbar.
-   The preview is rendered by preview.php, so what you see is exactly what the public profile shows. */
 (function () {
   var box = document.querySelector("[data-mdx]");
   if (!box) return;
@@ -13,7 +11,6 @@
   var icons = box.querySelector("[data-mdx-icons]");
   var savedSel = null;
 
-  /* Replace a range through execCommand so Ctrl+Z still works; fall back to setRangeText. */
   function replace(start, end, text, selStart, selEnd) {
     ta.focus();
     ta.setSelectionRange(start, end);
@@ -31,7 +28,6 @@
     replace(s, e, before + inner + after, s + before.length, s + before.length + inner.length);
   }
 
-  /* Start and end of the whole lines touched by the selection */
   function lineRange() {
     var v = ta.value, s = ta.selectionStart, e = ta.selectionEnd;
     var a = v.lastIndexOf("\n", s - 1) + 1;
@@ -98,7 +94,7 @@
   });
 
   tools.addEventListener("mousedown", function (e) {
-    if (e.target.closest("button")) e.preventDefault(); /* keep the selection in the textarea */
+    if (e.target.closest("button")) e.preventDefault();
   });
   tools.addEventListener("click", function (e) {
     var b = e.target.closest("button[data-cmd]");
@@ -107,7 +103,7 @@
     if (fn) fn();
   });
 
-  var iconColor = null; /* null = default colour; otherwise "#rrggbb" is added to the code */
+  var iconColor = null;
   if (icons) {
     var colorIn = icons.querySelector("[data-icon-color]"), colorOff = icons.querySelector("[data-icon-nocolor]");
     var paint = function () {
@@ -139,7 +135,6 @@
   ta.addEventListener("input", count);
   count();
 
-  /* WRITE / PREVIEW */
   var req = 0;
   function show(which) {
     var prev = which === "preview";

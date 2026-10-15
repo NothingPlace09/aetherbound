@@ -2,7 +2,6 @@
   var cfg = window.AETHER || {};
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  /* Loading screen: shown once per browser session */
   var pre = document.getElementById("preloader");
   if (pre) {
     var t0 = Date.now(), closed = false;
@@ -19,7 +18,6 @@
     setTimeout(closePre, 5000);
   }
 
-  /* Toast + copy IP */
   var toastEl = document.getElementById("toast"), tt;
   function toast(msg) {
     if (!toastEl) return;
@@ -35,12 +33,10 @@
   }
   document.querySelectorAll("[data-copy]").forEach(function (b) { b.addEventListener("click", copyIP); });
 
-  /* Buttons that are not active yet (Discord login) */
   document.querySelectorAll("[data-soon]").forEach(function (b) {
     b.addEventListener("click", function () { toast(cfg.soon); });
   });
 
-  /* Live password requirements on the sign up form */
   var pwBox = document.querySelector("[data-pwreq]"), pwInput = document.getElementById("password");
   if (pwBox && pwInput) {
     var rules = {
@@ -57,7 +53,6 @@
     check();
   }
 
-  /* Spoilers in profile text: click (or Enter / Space) to reveal */
   function toggleSpoiler(el) { el.classList.toggle("shown"); }
   document.addEventListener("click", function (e) {
     var sp = e.target.closest && e.target.closest(".md-spoiler");
@@ -69,7 +64,6 @@
     }
   });
 
-  /* Admin: ask before destructive actions, live preview of the role badge */
   document.querySelectorAll("form[data-confirm]").forEach(function (f) {
     f.addEventListener("submit", function (e) {
       if (!window.confirm(f.getAttribute("data-confirm"))) e.preventDefault();
@@ -82,7 +76,6 @@
     rc.addEventListener("input", upd);
   }
 
-  /* Platform tabs */
   var tabs = document.querySelectorAll("[data-tab]");
   var panels = document.querySelectorAll("[data-panel]");
   tabs.forEach(function (tab) {
@@ -93,7 +86,6 @@
     });
   });
 
-  /* Mobile menu */
   var navEl = document.getElementById("nav"), burger = document.getElementById("burger");
   function closeMenu() { navEl.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); }
   burger.addEventListener("click", function () {
@@ -102,7 +94,6 @@
   });
   document.querySelectorAll("#links a").forEach(function (a) { a.addEventListener("click", closeMenu); });
 
-  /* Language dropdown (options are plain links to ?lang=xx) */
   var langMenu = document.getElementById("langmenu"), langBtn = document.getElementById("langbtn");
   var langList = document.getElementById("langlist"), navBox = document.getElementById("navbox");
   function setMenu(open) {
@@ -118,7 +109,6 @@
     if (e.key === "Escape") { setMenu(false); langBtn.focus(); }
   });
 
-  /* Scroll effects: reveal, nav state, progress bar, background parallax */
   var vh = window.innerHeight;
   if (!reduce && "IntersectionObserver" in window) {
     var io = new IntersectionObserver(function (entries) {
@@ -149,7 +139,6 @@
   window.addEventListener("resize", function () { vh = window.innerHeight; onScroll(); });
   onScroll();
 
-  /* Pink embers */
   var cv = document.getElementById("embers");
   if (cv && !reduce) {
     var ctx = cv.getContext("2d"), W = 0, H = 0, dots = [];

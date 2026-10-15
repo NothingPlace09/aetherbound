@@ -1,5 +1,3 @@
-/* Staff application form: 4 steps with a progress bar, a check of each step before going on,
-   and a summary before sending. Without JavaScript the whole form is shown on one page. */
 (function () {
   var form = document.querySelector("[data-apply]");
   if (!form) return;
@@ -37,7 +35,6 @@
     }
   }
 
-  /* Never excludes the other options of a day, and the other way round */
   form.querySelectorAll(".ap-day").forEach(function (day) {
     var boxes = day.querySelectorAll("input[type=checkbox]");
     boxes.forEach(function (b) {
@@ -51,7 +48,6 @@
     });
   });
 
-  /* Check the fields of a step. Returns true when everything is fine. */
   function validate(step) {
     clearErr(step);
     var ok = true;
@@ -120,7 +116,6 @@
   btnPrev.addEventListener("click", function () { show(current - 1, true); });
 
   form.addEventListener("submit", function (e) {
-    // check every step once more before sending
     for (var i = 0; i < steps.length - 1; i++) {
       if (!validate(steps[i])) { e.preventDefault(); show(i, true); return; }
     }
@@ -133,7 +128,6 @@
     btnSubmit.textContent = btnSubmit.getAttribute("data-sending") || "…";
   });
 
-  /* After a server-side error, open the step that has the first problem */
   var first = form.querySelector("[data-err]");
   var start = 0;
   if (first) {

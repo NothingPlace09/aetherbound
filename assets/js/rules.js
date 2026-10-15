@@ -1,5 +1,3 @@
-/* Rules page: the menu on the left shows one category at a time (the link #r-smp opens SMP).
-   Without JavaScript every category is shown one after the other. */
 (function () {
   var root = document.querySelector("[data-rules]");
   if (!root) return;
@@ -32,7 +30,6 @@
       e.preventDefault();
       var id = show(t.getAttribute("data-rule-tab"), true);
       if (history.replaceState) history.replaceState(null, "", "#r-" + id);
-      /* On small screens bring the rules into view */
       if (window.innerWidth <= 900) {
         var top = root.querySelector(".rules-main").getBoundingClientRect().top + window.pageYOffset - 90;
         window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
