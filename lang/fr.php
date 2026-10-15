@@ -1,5 +1,4 @@
 <?php
-// fr translations
 return [
     'nav_home' => "Accueil",
     'nav_news' => "Actus",
@@ -83,7 +82,6 @@ return [
     'err_taken' => "Ce nom d'utilisateur ou cet e-mail est déjà utilisé.",
     'err_db' => "Un problème est survenu. Réessaie plus tard.",
     'discord_soon' => "La connexion avec Discord n'est pas encore activée.",
-    // --- profile & admin ---
     'nav_admin' => "Admin",
     'role_admin' => "Admin",
     'pf_badge' => "Profil",
