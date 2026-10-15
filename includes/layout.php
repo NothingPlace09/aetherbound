@@ -1,9 +1,4 @@
 <?php
-// Shared page pieces. page_banner() is the mini banner shown at the top of every page:
-// badge + big title + subtitle, over the lobby background (set $withBg = true before including header.php).
-
-/* Asset URL with a version taken from the file date: after you upload a new CSS/JS file, browsers and hosts
-   stop serving the old cached copy. */
 function asset_url($path)
 {
     $file = __DIR__ . '/../' . $path;
@@ -34,13 +29,13 @@ function page_icon($name, $size = 14)
         'x'      => '<path d="M6 6l12 12M18 6 6 18"/>',
         'flame'  => '<path d="M12 3c1 3.5 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .2 1.5 1 2 1.8 2C10.5 8 11 5.5 12 3Z"/>',
         'info'   => '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.2"/>',
+        'monitor' => '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
         'clock'  => '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     ];
     $path = isset($icons[$name]) ? $icons[$name] : $icons['shield'];
     return '<svg width="' . (int) $size . '" height="' . (int) $size . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $path . '</svg>';
 }
 
-/* $subArg: optional value for a %s in the subtitle (for example the site name). */
 function page_banner($badgeKey, $titleKey, $subKey, $subArg = null, $icon = 'shield')
 {
     $sub = $subArg !== null ? sprintf(t($subKey), $subArg) : t($subKey);

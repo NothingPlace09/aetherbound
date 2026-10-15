@@ -1,14 +1,8 @@
 <?php
-// Minecraft skin faces. The server asks Mojang itself (so it does not depend on a third-party avatar site):
-//   1) username -> UUID  (a username with no UUID = not a premium account)
-//   2) UUID -> skin image
-//   3) the face (head + hat layer) is cut out and saved in /cache/skins
-// Premium accounts get their real skin, everybody else gets Steve. Needs the PHP "gd" extension for cutting the face.
-
-const SKIN_TTL_UUID = 86400;   // premium name -> UUID is remembered for 1 day
-const SKIN_TTL_NONE = 3600;    // "not premium" is checked again after 1 hour
-const SKIN_TTL_ERROR = 90;     // if Mojang could not be reached, try again after 90 seconds
-const SKIN_TTL_FACE = 21600;   // the face image is refreshed every 6 hours (skin changes show up by themselves)
+const SKIN_TTL_UUID = 86400;
+const SKIN_TTL_NONE = 3600;
+const SKIN_TTL_ERROR = 90;
+const SKIN_TTL_FACE = 21600;
 
 function skin_dir()
 {
@@ -19,7 +13,6 @@ function skin_dir()
     return $dir;
 }
 
-/* GET a URL: returns [http status, body]. Status 0 = could not connect. */
 function skin_http($url, $timeout = 4)
 {
     if (function_exists('curl_init')) {
@@ -67,8 +60,6 @@ function skin_cache_read($file, $ttlKey = null)
     return time() - (int) $data['t'] < $ttl ? $data : null;
 }
 
-/* Is this username a premium Minecraft account?
-   Returns ['state' => 'premium', 'uuid' => ..., 'name' => ...] | ['state' => 'none'] | ['state' => 'error']. */
 function skin_lookup($name, $force = false)
 {
     if (!skin_valid_name($name)) {
@@ -91,14 +82,12 @@ function skin_lookup($name, $force = false)
                 break;
             }
         } elseif ($code === 404 || $code === 204) {
-            $result = ['state' => 'none']; // Mojang answered: no such premium account
+            $result = ['state' => 'none'];
             break;
         }
-        // any other answer (rate limit, outage): try the next source
     }
     $result['t'] = time();
     if ($result['state'] === 'error' && is_file($file)) {
-        // Mojang is unreachable: keep using the last known answer for a while
         $old = json_decode((string) @file_get_contents($file), true);
         if (is_array($old) && $old['state'] === 'premium') {
             $old['t'] = time() - SKIN_TTL_UUID + 600;
@@ -110,11 +99,9 @@ function skin_lookup($name, $force = false)
     return $result;
 }
 
-/* Downloads the skin PNG of a UUID. Returns the image bytes or null. */
 function skin_download($uuid)
 {
     $apis = $GLOBALS['config']['skin_apis'];
-    // Official way: the session server tells where the skin texture is
     list($code, $body) = skin_http(str_replace('{uuid}', $uuid, $apis['session']));
     if ($code === 200) {
         $j = json_decode($body, true);
@@ -133,7 +120,6 @@ function skin_download($uuid)
             }
         }
     }
-    // Backup sources (the session server limits requests)
     foreach ($apis['skin_fallbacks'] as $tpl) {
         list($c, $png) = skin_http(str_replace('{uuid}', $uuid, $tpl));
         if ($c === 200 && strncmp($png, "\x89PNG", 4) === 0) {
@@ -143,7 +129,6 @@ function skin_download($uuid)
     return null;
 }
 
-/* Cuts the 8x8 face (with the hat layer on top) out of a skin PNG. Returns PNG bytes or null. */
 function skin_cut_face($png)
 {
     if (!function_exists('imagecreatefromstring')) {
@@ -159,13 +144,13 @@ function skin_cut_face($png)
         imagedestroy($src);
         return null;
     }
-    $k = (int) ($w / 64); // HD skins: same layout, bigger pixels
+    $k = (int) ($w / 64);
     $face = imagecreatetruecolor(8 * $k, 8 * $k);
     imagealphablending($face, true);
     imagesavealpha($face, true);
     imagefill($face, 0, 0, imagecolorallocatealpha($face, 0, 0, 0, 127));
-    imagecopy($face, $src, 0, 0, 8 * $k, 8 * $k, 8 * $k, 8 * $k);       // head
-    imagecopy($face, $src, 0, 0, 40 * $k, 8 * $k, 8 * $k, 8 * $k);      // hat layer
+    imagecopy($face, $src, 0, 0, 8 * $k, 8 * $k, 8 * $k, 8 * $k);
+    imagecopy($face, $src, 0, 0, 40 * $k, 8 * $k, 8 * $k, 8 * $k);
     imagedestroy($src);
     ob_start();
     imagepng($face);
@@ -174,7 +159,6 @@ function skin_cut_face($png)
     return $out;
 }
 
-/* Path of the cached face image of a premium UUID (refreshed every 6 hours), or null. */
 function skin_face_file($uuid, $force = false)
 {
     $file = skin_dir() . '/f_' . $uuid . '.png';
@@ -189,13 +173,12 @@ function skin_face_file($uuid, $force = false)
         return $file;
     }
     if (is_file($file)) {
-        @touch($file, time() - SKIN_TTL_FACE + 600); // could not refresh: keep the old one, retry in 10 minutes
+        @touch($file, time() - SKIN_TTL_FACE + 600);
         return $file;
     }
     return null;
 }
 
-/* Forget what we know about a name (the "refresh" button on the profile). */
 function skin_forget($name)
 {
     if (!skin_valid_name($name)) {

@@ -1,5 +1,4 @@
 <?php
-// Expects: $page (menu key), $pageTitle (optional), bootstrap.php already loaded.
 $title = isset($pageTitle) && $pageTitle !== '' ? $pageTitle . ' · ' . $config['site_name'] : $config['site_name'];
 $withBg = isset($withBg) ? $withBg : ($page === 'home');
 $user = current_user();
@@ -40,7 +39,7 @@ $user = current_user();
 <div class="nav-wrap" id="navwrap">
   <div class="nav-box" id="navbox">
     <nav class="nav" id="nav" aria-label="Main">
-      <a class="brand" href="index.php" aria-label="<?= e($config['site_name']) ?>"><img class="avatar" src="assets/img/head.webp" alt="" width="34" height="34"><span>AETHER<b>BOUND</b></span></a>
+      <a class="brand" href="home" aria-label="<?= e($config['site_name']) ?>"><img class="avatar" src="assets/img/head.webp" alt="" width="34" height="34"><span>AETHER<b>BOUND</b></span></a>
       <div class="links" id="links">
         <?php foreach ($config['pages'] as $key => $item): ?>
           <a href="<?= e($item[0]) ?>"<?= $key === $page ? ' aria-current="page"' : '' ?>><?= e(t($item[1])) ?></a>
@@ -54,11 +53,11 @@ $user = current_user();
           </button>
         </div>
         <?php if ($user): ?>
-          <a class="userchip" href="profile.php" title="<?= e($user['username']) ?>"<?= $page === 'profile' ? ' aria-current="page"' : '' ?>><?= avatar_img($user, 24) ?><span><?= e($user['username']) ?></span></a>
-          <?php if ($user['role'] === 'admin'): ?><a class="login" href="admin.php"<?= $page === 'admin' ? ' aria-current="page"' : '' ?>><?= e(t('nav_admin')) ?></a><?php endif; ?>
-          <a class="login" href="logout.php?t=<?= e(csrf_token()) ?>"><?= e(t('nav_logout')) ?></a>
+          <a class="userchip" href="profile" title="<?= e($user['username']) ?>"<?= $page === 'profile' ? ' aria-current="page"' : '' ?>><?= avatar_img($user, 24) ?><span><?= e($user['username']) ?></span></a>
+          <?php if ($user['role'] === 'admin'): ?><a class="login" href="admin"<?= $page === 'admin' ? ' aria-current="page"' : '' ?>><?= e(t('nav_admin')) ?></a><?php endif; ?>
+          <a class="login" href="logout?t=<?= e(csrf_token()) ?>"><?= e(t('nav_logout')) ?></a>
         <?php else: ?>
-          <a class="login" href="login.php"<?= $page === 'login' ? ' aria-current="page"' : '' ?>><?= e(t('nav_login')) ?></a>
+          <a class="login" href="login"<?= $page === 'login' ? ' aria-current="page"' : '' ?>><?= e(t('nav_login')) ?></a>
         <?php endif; ?>
         <button type="button" class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="links">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>

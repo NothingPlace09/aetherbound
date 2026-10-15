@@ -1,8 +1,5 @@
 <?php
-// Local database: a single SQLite file stored in /database (created on first use).
-// Needs the PHP extension pdo_sqlite, which XAMPP enables by default.
-// The schema is versioned with PRAGMA user_version: older databases are upgraded automatically.
-const DB_SCHEMA_VERSION = 5;
+const DB_SCHEMA_VERSION = 6;
 
 function db()
 {
@@ -40,14 +37,12 @@ function db_migrate(PDO $pdo)
 
     $pdo->exec('BEGIN IMMEDIATE');
     try {
-        // Another request may have finished the upgrade while we waited for the lock.
         $from = db_current_version($pdo);
         if ($from >= DB_SCHEMA_VERSION) {
             $pdo->exec('COMMIT');
             return;
         }
 
-        // Passwords are never stored in plain text: only the password_hash() result.
         $pdo->exec('CREATE TABLE IF NOT EXISTS users (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             username      TEXT NOT NULL UNIQUE COLLATE NOCASE,
@@ -59,7 +54,6 @@ function db_migrate(PDO $pdo)
             last_login_at TEXT
         )');
 
-        // Custom roles created by the admin (badge shown next to the username).
         $pdo->exec('CREATE TABLE IF NOT EXISTS roles (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
             name       TEXT NOT NULL UNIQUE COLLATE NOCASE,
@@ -69,8 +63,6 @@ function db_migrate(PDO $pdo)
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         )');
 
-        // Roles added in schema 2: kind = 'public' (badge only) or 'staff' (also listed on staff.php),
-        // priority = order on the staff page (higher number first).
         $haveRole = [];
         foreach ($pdo->query('PRAGMA table_info(roles)') as $col) {
             $haveRole[$col['name']] = true;
@@ -82,8 +74,6 @@ function db_migrate(PDO $pdo)
             $pdo->exec('ALTER TABLE roles ADD COLUMN priority INTEGER NOT NULL DEFAULT 0');
         }
 
-        // Profile columns added after the first release.
-        // users.role stays the access level ('member' or 'admin'); users.role_id is the custom role badge.
         $have = [];
         foreach ($pdo->query('PRAGMA table_info(users)') as $col) {
             $have[$col['name']] = true;
@@ -101,7 +91,6 @@ function db_migrate(PDO $pdo)
             }
         }
 
-        // News posts (schema 3). category: news | update | event. published 0 = draft (admins only).
         $pdo->exec('CREATE TABLE IF NOT EXISTS news (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
             title      TEXT NOT NULL,
@@ -122,8 +111,6 @@ function db_migrate(PDO $pdo)
             PRIMARY KEY (news_id, user_id)
         )');
 
-        // Rules page (schema 4): categories > sections > rules, written in English and Italian.
-        // kind 'rules' = numbered list of rules, kind 'table' = a table (cells separated by |, first line = header).
         $pdo->exec('CREATE TABLE IF NOT EXISTS rule_cats (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
             slug       TEXT NOT NULL UNIQUE,
@@ -158,10 +145,9 @@ function db_migrate(PDO $pdo)
         )');
         if ($from < 4 && !(int) $pdo->query('SELECT COUNT(*) FROM rule_cats')->fetchColumn()) {
             require_once __DIR__ . '/rules.php';
-            rules_seed($pdo); // first time only: fills the tables with the starting rules from rules_data.php
+            rules_seed($pdo);
         }
 
-        // Staff applications (schema 5): a record of every application sent to Discord (also used for the cooldown).
         $pdo->exec('CREATE TABLE IF NOT EXISTS applications (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
             code       TEXT NOT NULL UNIQUE,
@@ -172,7 +158,59 @@ function db_migrate(PDO $pdo)
         )');
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_applications_user ON applications(user_id, role, created_at)');
 
-        // The admin account is only seeded on the first setup, so upgrades never reset its password.
+        $pdo->exec('CREATE TABLE IF NOT EXISTS apply_cats (
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            slug     TEXT NOT NULL UNIQUE,
+            icon     TEXT NOT NULL DEFAULT \'users\',
+            short_en TEXT NOT NULL DEFAULT \'\',
+            short_it TEXT NOT NULL DEFAULT \'\',
+            title_en TEXT NOT NULL,
+            title_it TEXT NOT NULL DEFAULT \'\',
+            tag_en   TEXT NOT NULL DEFAULT \'\',
+            tag_it   TEXT NOT NULL DEFAULT \'\',
+            desc_en  TEXT NOT NULL DEFAULT \'\',
+            desc_it  TEXT NOT NULL DEFAULT \'\',
+            sort     INTEGER NOT NULL DEFAULT 0
+        )');
+        $pdo->exec('CREATE TABLE IF NOT EXISTS apply_roles (
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            cat_id   INTEGER NOT NULL REFERENCES apply_cats(id) ON DELETE CASCADE,
+            slug     TEXT NOT NULL UNIQUE,
+            icon     TEXT NOT NULL DEFAULT \'users\',
+            title_en TEXT NOT NULL,
+            title_it TEXT NOT NULL DEFAULT \'\',
+            tag_en   TEXT NOT NULL DEFAULT \'\',
+            tag_it   TEXT NOT NULL DEFAULT \'\',
+            desc_en  TEXT NOT NULL DEFAULT \'\',
+            desc_it  TEXT NOT NULL DEFAULT \'\',
+            req_en   TEXT NOT NULL DEFAULT \'\',
+            req_it   TEXT NOT NULL DEFAULT \'\',
+            sort     INTEGER NOT NULL DEFAULT 0,
+            active   INTEGER NOT NULL DEFAULT 1
+        )');
+        $pdo->exec('CREATE TABLE IF NOT EXISTS apply_questions (
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            role_id  INTEGER NOT NULL REFERENCES apply_roles(id) ON DELETE CASCADE,
+            label_en TEXT NOT NULL,
+            label_it TEXT NOT NULL DEFAULT \'\',
+            help_en  TEXT NOT NULL DEFAULT \'\',
+            help_it  TEXT NOT NULL DEFAULT \'\',
+            type     TEXT NOT NULL DEFAULT \'textarea\',
+            required INTEGER NOT NULL DEFAULT 1,
+            min      INTEGER NOT NULL DEFAULT 0,
+            max      INTEGER NOT NULL DEFAULT 700,
+            sort     INTEGER NOT NULL DEFAULT 0
+        )');
+        $pdo->exec('CREATE TABLE IF NOT EXISTS apply_settings (
+            k  TEXT PRIMARY KEY,
+            en TEXT NOT NULL DEFAULT \'\',
+            it TEXT NOT NULL DEFAULT \'\'
+        )');
+        if ($from < 6 && !(int) $pdo->query('SELECT COUNT(*) FROM apply_cats')->fetchColumn()) {
+            require_once __DIR__ . '/apply.php';
+            apply_seed($pdo);
+        }
+
         if ($from < 2) {
             $config = require __DIR__ . '/config.php';
             db_seed_admin($pdo, $config['admin_seed']);
@@ -186,7 +224,6 @@ function db_migrate(PDO $pdo)
     }
 }
 
-/* Creates the admin account. If that email is already registered, the account becomes the admin. */
 function db_seed_admin(PDO $pdo, array $seed)
 {
     $st = $pdo->prepare('SELECT id FROM users WHERE email = ?');
@@ -209,7 +246,6 @@ function db_seed_admin(PDO $pdo, array $seed)
             if ($ex->getCode() !== '23000') {
                 throw $ex;
             }
-            // username already used by someone else: try the next variation
         }
     }
 }

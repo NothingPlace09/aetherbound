@@ -1,5 +1,4 @@
 <?php
-// Loaded at the top of every page: config, language, helpers.
 $config = require __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/markdown.php';
@@ -7,7 +6,6 @@ require_once __DIR__ . '/layout.php';
 require_once __DIR__ . '/rules.php';
 require_once __DIR__ . '/apply.php';
 
-/* ---- Language: ?lang=xx sets a cookie, then falls back to cookie, browser, default ---- */
 $languages = $config['languages'];
 $lang = $config['default_lang'];
 
@@ -36,13 +34,11 @@ if (isset($_COOKIE['aeth_lang']) && isset($languages[$_COOKIE['aeth_lang']])) {
     }
 }
 
-/* ---- Translations (English is the fallback for missing keys) ---- */
 $GLOBALS['T'] = require __DIR__ . '/../lang/en.php';
 if ($lang !== 'en') {
     $GLOBALS['T'] = array_merge($GLOBALS['T'], require __DIR__ . '/../lang/' . $lang . '.php');
 }
 
-/* ---- Helpers ---- */
 function t($key)
 {
     return isset($GLOBALS['T'][$key]) ? $GLOBALS['T'][$key] : $key;
@@ -66,7 +62,6 @@ function flag($id)
     return '<svg class="flag" viewBox="0 0 24 16" width="24" height="16" aria-hidden="true">' . $inner . '</svg>';
 }
 
-/* Discord counts from the public invite API, cached on disk. Returns nulls if unavailable. */
 function discord_stats(array $config)
 {
     $empty = ['online' => null, 'members' => null];
@@ -113,18 +108,15 @@ function discord_stats(array $config)
     return $cached ? $cached : $empty;
 }
 
-/* ---- Profile helpers ---- */
 
-/* Picture of a member: the face of their Minecraft skin, served by skin.php. Works on any row with a "username" key. */
 function avatar_url(array $u, $size = 128)
 {
     if (!empty($u['username']) && preg_match('/^[A-Za-z0-9_]{1,16}$/', $u['username'])) {
-        return 'skin.php?u=' . rawurlencode($u['username']) . '&s=' . (int) $size;
+        return 'skin?u=' . rawurlencode($u['username']) . '&s=' . (int) $size;
     }
     return 'assets/img/head.webp';
 }
 
-/* <img> for a member's picture, with the default head if the skin service is unreachable. */
 function avatar_img(array $u, $px, $class = '', $id = '')
 {
     return '<img' . ($class !== '' ? ' class="' . e($class) . '"' : '') . ($id !== '' ? ' id="' . e($id) . '"' : '')
@@ -132,7 +124,6 @@ function avatar_img(array $u, $px, $class = '', $id = '')
         . ' loading="lazy" onerror="this.onerror=null;this.src=\'assets/img/head.webp\'">';
 }
 
-/* Colour badges next to a username: the custom role (if any) and ADMIN for admins. */
 function role_badges(array $u)
 {
     $out = '';
@@ -146,7 +137,6 @@ function role_badges(array $u)
     return $out;
 }
 
-/* Formats a UTC timestamp from the database in the visitor's language. */
 function fmt_date($sqlUtc, $withTime = false)
 {
     if (!$sqlUtc) {
@@ -166,7 +156,6 @@ function fmt_date($sqlUtc, $withTime = false)
     return date($withTime ? 'Y-m-d H:i' : 'Y-m-d', $ts);
 }
 
-/* "Online now" if seen in the last 5 minutes, otherwise the date of the last visit. */
 function fmt_seen($sqlUtc)
 {
     if ($sqlUtc && time() - strtotime($sqlUtc . ' UTC') < 300) {
@@ -175,7 +164,6 @@ function fmt_seen($sqlUtc)
     return fmt_date($sqlUtc, true);
 }
 
-/* Full phrase: "Online now" or "Last online <date>". */
 function seen_text($sqlUtc)
 {
     if ($sqlUtc && time() - strtotime($sqlUtc . ' UTC') < 300) {
@@ -184,7 +172,6 @@ function seen_text($sqlUtc)
     return t('pf_last_online') . ' ' . fmt_date($sqlUtc, true);
 }
 
-/* Cleans free text typed by a member: unified line breaks, no control characters, max length. */
 function clean_text($s, $max)
 {
     $s = str_replace(["\r\n", "\r"], "\n", (string) $s);
@@ -193,7 +180,6 @@ function clean_text($s, $max)
     return mb_substr($s, 0, $max, 'UTF-8');
 }
 
-/* Shows (and clears) the flash message set before a redirect. */
 function flash_html()
 {
     $f = flash();

@@ -1,5 +1,4 @@
 <?php
-// Sessions, CSRF protection, login throttling and the logged-in user.
 require_once __DIR__ . '/db.php';
 
 function ensure_session($create = false)
@@ -7,7 +6,6 @@ function ensure_session($create = false)
     if (session_status() === PHP_SESSION_ACTIVE) {
         return true;
     }
-    // Pages that only display the navbar do not open a session unless the visitor already has one.
     if (!$create && !isset($_COOKIE[session_name()])) {
         return false;
     }
@@ -37,7 +35,6 @@ function current_user()
             $st->execute([(int) $_SESSION['uid']]);
             $row = $st->fetch();
             $user = $row ? $row : null;
-            // "Last online": refreshed at most once a minute.
             if ($user && (!$user['last_seen_at'] || time() - strtotime($user['last_seen_at'] . ' UTC') > 60)) {
                 db()->prepare("UPDATE users SET last_seen_at = datetime('now') WHERE id = ?")->execute([$user['id']]);
                 $user['last_seen_at'] = gmdate('Y-m-d H:i:s');
@@ -55,27 +52,24 @@ function redirect($url)
     exit;
 }
 
-/* Page that needs a logged-in member: guests are sent to the login page. */
 function require_login()
 {
     $user = current_user();
     if (!$user) {
-        redirect('login.php');
+        redirect('login');
     }
     return $user;
 }
 
-/* Page for admins only: everybody else is sent to their own profile (or the login page). */
 function require_admin()
 {
     $user = require_login();
     if ($user['role'] !== 'admin') {
-        redirect('profile.php');
+        redirect('profile');
     }
     return $user;
 }
 
-/* One-shot message shown after a redirect: flash('ok', 'key') to set, flash() to read and clear. */
 function flash($type = null, $key = null)
 {
     ensure_session(true);
@@ -103,7 +97,6 @@ function csrf_ok($token)
     return is_string($token) && !empty($_SESSION['csrf']) && hash_equals($_SESSION['csrf'], $token);
 }
 
-/* Max 5 failed attempts per 10 minutes for each browser session. */
 function auth_blocked()
 {
     ensure_session(true);

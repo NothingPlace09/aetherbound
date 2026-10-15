@@ -1,6 +1,5 @@
 <?php
-// News helpers: categories, dates, excerpts and cover images.
-const NEWS_IMAGE_MAX = 4194304; // 4 MB
+const NEWS_IMAGE_MAX = 4194304;
 
 function news_categories()
 {
@@ -28,7 +27,6 @@ function news_date($sqlUtc)
     return date('j M Y', $ts);
 }
 
-/* Short summary taken from the start of the text when the admin leaves the summary empty. */
 function news_excerpt_from_body($body, $max = 200)
 {
     $s = preg_replace('/```.*?```/s', ' ', (string) $body);
@@ -53,7 +51,7 @@ function news_image_dir()
 
 function news_image_url(array $row)
 {
-    return !empty($row['image']) && preg_match('/^n_[a-f0-9]{16}\.(webp|jpg|png)$/', $row['image']) ? 'img.php?f=' . $row['image'] : null;
+    return !empty($row['image']) && preg_match('/^n_[a-f0-9]{16}\.(webp|jpg|png)$/', $row['image']) ? 'img?f=' . $row['image'] : null;
 }
 
 function news_image_delete($name)
@@ -66,8 +64,6 @@ function news_image_delete($name)
     }
 }
 
-/* Cover image upload. Returns the stored file name, or null and sets $err to a translation key.
-   With GD the picture is re-encoded (max 1400 px wide), which also strips any hidden data. */
 function news_image_store(array $file, &$err)
 {
     $err = null;
@@ -113,7 +109,6 @@ function news_image_store(array $file, &$err)
             $ok = @imagewebp($dst, $dir . '/' . $name, 86);
             imagedestroy($src);
             imagedestroy($dst);
-            // Some servers write an empty or broken file: only accept it if it can be read back as an image.
             if ($ok && is_file($dir . '/' . $name) && filesize($dir . '/' . $name) > 0 && @getimagesize($dir . '/' . $name)) {
                 @chmod($dir . '/' . $name, 0644);
                 return $name;
@@ -122,13 +117,12 @@ function news_image_store(array $file, &$err)
         }
     }
 
-    // No GD / WebP support: keep the original, with the extension of its real type.
     $name = $base . '.' . $types[$info[2]];
     if (!move_uploaded_file($file['tmp_name'], $dir . '/' . $name) || !is_file($dir . '/' . $name) || filesize($dir . '/' . $name) === 0) {
         $err = 'err_news_image';
         return null;
     }
-    @chmod($dir . '/' . $name, 0644); // uploads can be created with private permissions (0600)
+    @chmod($dir . '/' . $name, 0644);
     return $name;
 }
 

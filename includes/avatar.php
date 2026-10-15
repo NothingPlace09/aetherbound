@@ -1,6 +1,4 @@
 <?php
-// Profile photo upload. Returns the stored file name, or null and sets $err to a translation key.
-// With the GD extension the image is re-encoded as a 256x256 PNG (this also removes any hidden data).
 function avatar_dir()
 {
     return __DIR__ . '/../uploads/avatars';
@@ -79,7 +77,6 @@ function avatar_store(array $file, $uid, $maxBytes, &$err)
         return $name;
     }
 
-    // No GD: keep the original file, with an extension taken from the real image type.
     $name = $base . '.' . $types[$info[2]];
     if (!move_uploaded_file($file['tmp_name'], $dir . '/' . $name)) {
         $err = 'err_avatar';

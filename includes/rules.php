@@ -1,21 +1,17 @@
 <?php
-// Rules stored in the database (tables rule_cats > rule_secs > rule_items). Edited in Admin → Rules.
-
-const RULES_LANGS = ['en', 'it']; // languages the admin writes; every other language shows the English text
+const RULES_LANGS = ['en', 'it'];
 
 function rules_icons()
 {
     return ['shield', 'book', 'chat', 'ban', 'mute', 'globe', 'cube', 'clock', 'users', 'pen'];
 }
 
-/* The text in the visitor's language, English if that translation is empty. */
 function rules_pick($en, $it)
 {
     $lang = isset($GLOBALS['lang']) ? $GLOBALS['lang'] : 'en';
     return ($lang === 'it' && trim((string) $it) !== '') ? $it : $en;
 }
 
-/* "Offense | 1st | 2nd" lines -> ['head' => [...], 'rows' => [[...], ...]] */
 function rules_parse_table($text)
 {
     $head = [];
@@ -34,8 +30,6 @@ function rules_parse_table($text)
     return ['head' => $head, 'rows' => $rows];
 }
 
-/* Everything the public rules page needs, already in the visitor's language:
-   [ ['label' => 'Minecraft', 'items' => [ ['id', 'icon', 'title', 'sub', 'updated', 'sections' => [...]] ]] ] */
 function rules_load()
 {
     $pdo = db();
@@ -85,13 +79,11 @@ function rules_load()
     return $groups;
 }
 
-/* Marks a category as updated now (the "Last updated" badge on the rules page). */
 function rules_touch(PDO $pdo, $catId)
 {
     $pdo->prepare("UPDATE rule_cats SET updated_at = datetime('now') WHERE id = ?")->execute([(int) $catId]);
 }
 
-/* Unique URL name for a category: "SMP" -> "smp", a second one -> "smp-2". */
 function rules_slug(PDO $pdo, $title, $exceptId = 0)
 {
     $base = trim(preg_replace('/[^a-z0-9]+/', '-', strtolower($title)), '-');
@@ -110,7 +102,6 @@ function rules_slug(PDO $pdo, $title, $exceptId = 0)
     return $base . '-' . bin2hex(random_bytes(2));
 }
 
-/* First-time content: copies the starting rules of includes/rules_data.php into the database. */
 function rules_seed(PDO $pdo)
 {
     require_once __DIR__ . '/rules_data.php';

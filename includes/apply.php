@@ -1,26 +1,198 @@
 <?php
-// Staff applications: validation of the form and delivery to Discord (webhook). Page: apply.php
-
 const APPLY_DAYS = ['mon' => 'Monday', 'tue' => 'Tuesday', 'wed' => 'Wednesday', 'thu' => 'Thursday', 'fri' => 'Friday', 'sat' => 'Saturday', 'sun' => 'Sunday'];
 const APPLY_SLOTS = ['morning' => 'Morning', 'afternoon' => 'Afternoon', 'evening' => 'Evening', 'never' => 'Never'];
 
 require_once __DIR__ . '/apply_data.php';
 
-/* The webhook address, only if it really looks like a Discord webhook. */
+function ap_t($v)
+{
+    return is_array($v) ? rules_pick($v['en'], $v['it']) : (string) $v;
+}
+
+function apply_icons()
+{
+    return ['users', 'bell', 'heart', 'shield', 'code', 'cube', 'monitor', 'star', 'pen', 'chat', 'globe', 'book'];
+}
+
+function apply_lines($text)
+{
+    $out = [];
+    foreach (preg_split('/\R/', (string) $text) as $line) {
+        $line = trim($line);
+        if ($line !== '') {
+            $out[] = $line;
+        }
+    }
+    return $out;
+}
+
+function apply_clean_lines($text, $maxLines = 12, $maxLen = 240)
+{
+    $out = [];
+    foreach (apply_lines(clean_text((string) $text, $maxLines * $maxLen)) as $line) {
+        $out[] = mb_substr($line, 0, $maxLen, 'UTF-8');
+        if (count($out) >= $maxLines) {
+            break;
+        }
+    }
+    return implode("\n", $out);
+}
+
+function apply_pairs($en, $it)
+{
+    $a = apply_lines($en);
+    $b = apply_lines($it);
+    $out = [];
+    foreach ($a as $i => $line) {
+        $out[] = ['en' => $line, 'it' => isset($b[$i]) ? $b[$i] : $line];
+    }
+    return $out;
+}
+
+function apply_tree($onlyActive = true)
+{
+    $pdo = db();
+    $cats = $pdo->query('SELECT * FROM apply_cats ORDER BY sort, id')->fetchAll();
+    $roles = [];
+    $sql = 'SELECT * FROM apply_roles' . ($onlyActive ? ' WHERE active = 1' : '') . ' ORDER BY sort, id';
+    foreach ($pdo->query($sql) as $r) {
+        $roles[(int) $r['cat_id']][] = $r;
+    }
+    $qs = [];
+    foreach ($pdo->query('SELECT * FROM apply_questions ORDER BY sort, id') as $q) {
+        $qs[(int) $q['role_id']][] = $q;
+    }
+    $tree = [];
+    foreach ($cats as $c) {
+        $cat = [
+            'id'    => $c['slug'],
+            'db_id' => (int) $c['id'],
+            'icon'  => in_array($c['icon'], apply_icons(), true) ? $c['icon'] : 'users',
+            'short' => ['en' => $c['short_en'], 'it' => $c['short_it'] !== '' ? $c['short_it'] : $c['short_en']],
+            'title' => ['en' => $c['title_en'], 'it' => $c['title_it'] !== '' ? $c['title_it'] : $c['title_en']],
+            'tag'   => ['en' => $c['tag_en'], 'it' => $c['tag_it'] !== '' ? $c['tag_it'] : $c['tag_en']],
+            'desc'  => ['en' => $c['desc_en'], 'it' => $c['desc_it'] !== '' ? $c['desc_it'] : $c['desc_en']],
+            'roles' => [],
+        ];
+        foreach (isset($roles[(int) $c['id']]) ? $roles[(int) $c['id']] : [] as $r) {
+            $questions = [];
+            foreach (isset($qs[(int) $r['id']]) ? $qs[(int) $r['id']] : [] as $q) {
+                $questions[] = [
+                    'id'       => (string) $q['id'],
+                    'type'     => $q['type'] === 'text' ? 'text' : 'textarea',
+                    'required' => (int) $q['required'] === 1,
+                    'min'      => (int) $q['min'],
+                    'max'      => (int) $q['max'],
+                    'label'    => ['en' => $q['label_en'], 'it' => $q['label_it'] !== '' ? $q['label_it'] : $q['label_en']],
+                    'help'     => $q['help_en'] !== '' ? ['en' => $q['help_en'], 'it' => $q['help_it'] !== '' ? $q['help_it'] : $q['help_en']] : null,
+                ];
+            }
+            $cat['roles'][] = [
+                'id'        => $r['slug'],
+                'db_id'     => (int) $r['id'],
+                'cat'       => $c['slug'],
+                'cat_short' => $cat['short'],
+                'icon'      => in_array($r['icon'], apply_icons(), true) ? $r['icon'] : 'users',
+                'title'     => ['en' => $r['title_en'], 'it' => $r['title_it'] !== '' ? $r['title_it'] : $r['title_en']],
+                'tag'       => ['en' => $r['tag_en'], 'it' => $r['tag_it'] !== '' ? $r['tag_it'] : $r['tag_en']],
+                'desc'      => ['en' => $r['desc_en'], 'it' => $r['desc_it'] !== '' ? $r['desc_it'] : $r['desc_en']],
+                'req'       => apply_pairs($r['req_en'], $r['req_it']),
+                'questions' => $questions,
+                'active'    => (int) $r['active'] === 1,
+            ];
+        }
+        $tree[] = $cat;
+    }
+    return $tree;
+}
+
+function apply_find_cat($slug)
+{
+    foreach (apply_tree() as $c) {
+        if ($c['id'] === $slug) {
+            return $c;
+        }
+    }
+    return null;
+}
+
+function apply_find_role($slug)
+{
+    foreach (apply_tree() as $c) {
+        foreach ($c['roles'] as $r) {
+            if ($r['id'] === $slug) {
+                return $r;
+            }
+        }
+    }
+    return null;
+}
+
+function apply_rules()
+{
+    $st = db()->prepare("SELECT en, it FROM apply_settings WHERE k = 'rules'");
+    $st->execute();
+    $row = $st->fetch();
+    return $row ? apply_pairs($row['en'], $row['it']) : [];
+}
+
+function apply_slug(PDO $pdo, $table, $title)
+{
+    $base = trim(preg_replace('/[^a-z0-9]+/', '-', strtolower($title)), '-');
+    if ($base === '') {
+        $base = 'item';
+    }
+    $slug = $base;
+    for ($i = 2; $i < 200; $i++) {
+        $st = $pdo->prepare('SELECT 1 FROM ' . $table . ' WHERE slug = ?');
+        $st->execute([$slug]);
+        if (!$st->fetch()) {
+            return $slug;
+        }
+        $slug = $base . '-' . $i;
+    }
+    return $base . '-' . bin2hex(random_bytes(2));
+}
+
+function apply_seed(PDO $pdo)
+{
+    $data = apply_seed_data();
+    $join = function ($items, $lang) {
+        return implode("\n", array_map(function ($i) use ($lang) { return $i[$lang]; }, $items));
+    };
+    $pdo->prepare("INSERT OR REPLACE INTO apply_settings (k, en, it) VALUES ('rules', ?, ?)")
+        ->execute([$join($data['rules'], 'en'), $join($data['rules'], 'it')]);
+
+    $cat = $pdo->prepare('INSERT INTO apply_cats (slug, icon, short_en, short_it, title_en, title_it, tag_en, tag_it, desc_en, desc_it, sort) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+    $role = $pdo->prepare('INSERT INTO apply_roles (cat_id, slug, icon, title_en, title_it, tag_en, tag_it, desc_en, desc_it, req_en, req_it, sort, active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1)');
+    $quest = $pdo->prepare('INSERT INTO apply_questions (role_id, label_en, label_it, help_en, help_it, type, required, min, max, sort) VALUES (?,?,?,?,?,?,?,?,?,?)');
+    $n = 0;
+    foreach ($data['cats'] as $c) {
+        $cat->execute([$c['slug'], $c['icon'], $c['short']['en'], $c['short']['it'], $c['title']['en'], $c['title']['it'], $c['tag']['en'], $c['tag']['it'], $c['desc']['en'], $c['desc']['it'], ++$n * 10]);
+        $cid = (int) $pdo->lastInsertId();
+        foreach ($c['roles'] as $ri => $r) {
+            $role->execute([$cid, $r['slug'], $r['icon'], $r['title']['en'], $r['title']['it'], $r['tag']['en'], $r['tag']['it'], $r['desc']['en'], $r['desc']['it'], $join($r['req'], 'en'), $join($r['req'], 'it'), ($ri + 1) * 10]);
+            $rid = (int) $pdo->lastInsertId();
+            foreach ($r['questions'] as $qi => $q) {
+                $h = $q['help'];
+                $quest->execute([$rid, $q['label']['en'], $q['label']['it'], $h ? $h['en'] : '', $h ? $h['it'] : '', $q['type'], $q['required'], $q['min'], $q['max'], ($qi + 1) * 10]);
+            }
+        }
+    }
+}
+
 function apply_webhook_url()
 {
     $url = trim((string) $GLOBALS['config']['apply_webhook']);
     return preg_match('~^https://(?:(?:ptb|canary)\.)?discord(?:app)?\.com/api/(?:v\d+/)?webhooks/\d+/[A-Za-z0-9._-]+$~', $url) ? $url : '';
 }
 
-/* One line / long text coming from the form. */
 function apply_field($key, $max, $multi = false)
 {
     $v = clean_text(isset($_POST[$key]) && is_string($_POST[$key]) ? $_POST[$key] : '', $max);
     return $multi ? $v : trim(preg_replace('/\s+/', ' ', str_replace("\n", ' ', $v)));
 }
 
-/* Checks the whole form. Returns [errors (field => message), values]. */
 function apply_validate(array $role)
 {
     global $config;
@@ -30,6 +202,11 @@ function apply_validate(array $role)
     $v['nickname'] = apply_field('nickname', 16);
     if (!preg_match('/^[A-Za-z0-9_]{3,16}$/', $v['nickname'])) {
         $err['nickname'] = t('ap_e_nick');
+    }
+
+    $v['discord'] = apply_field('discord', 37);
+    if (!preg_match('/^[A-Za-z0-9_.]{2,32}(#[0-9]{4})?$/', $v['discord'])) {
+        $err['discord'] = t('ap_e_discord');
     }
 
     $v['premium'] = isset($_POST['premium']) && $_POST['premium'] === 'yes' ? 'yes' : (isset($_POST['premium']) && $_POST['premium'] === 'no' ? 'no' : '');
@@ -74,8 +251,7 @@ function apply_validate(array $role)
 
     $v['answers'] = [];
     foreach ($role['questions'] as $q) {
-        $multi = $q['type'] === 'textarea';
-        $val = apply_field('q_' . $q['id'], (int) $q['max'], $multi);
+        $val = apply_field('q_' . $q['id'], (int) $q['max'], $q['type'] === 'textarea');
         $v['answers'][$q['id']] = $val;
         $len = mb_strlen($val, 'UTF-8');
         if ($q['required'] && $val === '') {
@@ -92,17 +268,14 @@ function apply_validate(array $role)
     return [$err, $v];
 }
 
-/* Text typed by the applicant, made harmless inside a Discord embed (no fake links or mentions). */
 function apply_safe($s)
 {
     return str_replace(['](', '<'], ['] (', "<\u{200B}"], $s);
 }
 
-/* The Discord embed(s): same look as the other staff applications, one "Label: answer" line per question. */
 function apply_embeds(array $role, array $v, array $user, $discordId, $code, $ts)
 {
-    $line = "\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}";
-    $roleName = $role['title']['en'];
+    $line = str_repeat("\u{2500}", 14);
 
     $applicant = $discordId ? '<@' . $discordId . '> (`' . $code . '`)' : '**' . $user['username'] . '** (`' . $code . '`)';
     $lines = [
@@ -111,6 +284,7 @@ function apply_embeds(array $role, array $v, array $user, $discordId, $code, $ts
         '**Submitted:** <t:' . $ts . ':R>',
         $line,
         '**Nickname:** ' . $v['nickname'],
+        '**Discord nickname:** ' . apply_safe($v['discord']),
         '**Minecraft Premium:** ' . ($v['premium'] === 'yes' ? 'Yes' : 'No'),
         '**Age:** ' . $v['age'],
         '**Time zone:** ' . $v['tz'],
@@ -124,16 +298,11 @@ function apply_embeds(array $role, array $v, array $user, $discordId, $code, $ts
     $lines[] = "**About:**\n" . apply_safe($v['about']);
     foreach ($role['questions'] as $q) {
         $ans = $v['answers'][$q['id']];
-        if ($ans === '') {
-            $ans = '_No answer_';
-        } else {
-            $ans = apply_safe($ans);
-        }
+        $ans = $ans === '' ? '_No answer_' : apply_safe($ans);
         $label = rtrim($q['label']['en']);
         $lines[] = '**' . $label . (preg_match('/[?:.]$/', $label) ? '' : ':') . '**' . ($q['type'] === 'textarea' ? "\n" : ' ') . $ans;
     }
 
-    // split in chunks that fit the Discord limit (4096 characters per embed)
     $chunks = [''];
     foreach ($lines as $l) {
         $i = count($chunks) - 1;
@@ -149,7 +318,7 @@ function apply_embeds(array $role, array $v, array $user, $discordId, $code, $ts
     foreach ($chunks as $i => $c) {
         $e = ['description' => mb_substr($c, 0, 4000, 'UTF-8'), 'color' => 0xE8387F];
         if ($i === 0) {
-            $e['title'] = "\u{1F4CB} Staff Application - " . $roleName;
+            $e['title'] = "\u{1F4CB} " . $role['cat_short']['en'] . ' Application - ' . $role['title']['en'];
         }
         if ($i === count($chunks) - 1) {
             $e['footer'] = ['text' => 'Application ID: ' . $code . ' | ' . $GLOBALS['config']['site_name']];
@@ -160,7 +329,6 @@ function apply_embeds(array $role, array $v, array $user, $discordId, $code, $ts
     return $embeds;
 }
 
-/* POST a JSON message to the webhook. Returns the HTTP status (204 = delivered, 0 = no connection). */
 function apply_webhook_post($url, array $payload)
 {
     $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -192,7 +360,6 @@ function apply_webhook_post($url, array $payload)
     return 0;
 }
 
-/* Sends an application. Returns [true, code] or [false, error message]. */
 function apply_submit(array $role, array $v, array $user)
 {
     global $config;
@@ -215,7 +382,6 @@ function apply_submit(array $role, array $v, array $user)
         return [false, t('ap_closed')];
     }
 
-    // unique short code of the application
     $alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
     for ($try = 0; $try < 20; $try++) {
         $code = '';
@@ -243,7 +409,6 @@ function apply_submit(array $role, array $v, array $user)
         'allowed_mentions' => ['parse' => []],
     ]);
     if ($status < 200 || $status >= 300) {
-        // not delivered: forget it, so the member can try again at once
         $pdo->prepare('DELETE FROM applications WHERE id = ?')->execute([$rowId]);
         return [false, t('ap_e_send')];
     }

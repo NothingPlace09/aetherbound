@@ -1,13 +1,4 @@
 <?php
-// Formatting for "About me". Members type simple codes, this turns them into safe HTML.
-// The text is escaped FIRST, so nothing a member types can ever become a tag: only the tags below are produced.
-//
-//   **bold**   *italic*   ||spoiler||   `code`   ```code block```
-//   :info: :clock: ... icons (list in md_icons()), coloured: :star#ffcc00:   [text](https://link)   [color=#ff6aa8]text[/color]   [center]text[/center]
-//   # H1   ## H2   ### H3   > quote   - list   --- divider
-
-// Inline icons: type :name: inside a post (for example ":info: What is the Closed Beta?").
-// Only the names below are replaced, with fixed SVG drawings, so nothing a member types can become markup.
 function md_icons()
 {
     return [
@@ -62,7 +53,6 @@ function md_render($text)
         return "\0" . (count($hold) - 1) . "\0";
     };
 
-    // Code first: what is inside is never formatted.
     $text = preg_replace_callback('/```[ \t]*\n?(.*?)\n?```/s', function ($m) use ($stash) {
         return $stash('<pre><code>' . $m[1] . '</code></pre>');
     }, $text);
@@ -71,11 +61,9 @@ function md_render($text)
     }, $text);
 
     $inline = function ($s) use ($stash) {
-        // Links: http(s) only (no javascript: etc.)
         $s = preg_replace_callback('/\[([^\]\n]{1,100})\]\((https?:\/\/[^\s()<>"]{1,300})\)/', function ($m) use ($stash) {
             return $stash('<a href="' . $m[2] . '" target="_blank" rel="noopener nofollow ugc">' . $m[1] . '</a>');
         }, $s);
-        // Icons: :name: or coloured :name#ff6aa8: (unknown names stay as typed)
         $s = preg_replace_callback('/:([a-z]{2,12})(?:#([0-9a-fA-F]{6}))?:/', function ($m) use ($stash) {
             $svg = md_icon_svg($m[1], isset($m[2]) && $m[2] !== '' ? '#' . $m[2] : null);
             return $svg === '' ? $m[0] : $stash($svg);
@@ -142,7 +130,6 @@ function md_render($text)
         return $out;
     };
 
-    // [center] ... [/center] centres everything inside it (it may span several lines).
     $out = '';
     $parts = preg_split('/(\[center\].*?\[\/center\])/s', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
     foreach ($parts as $part) {
@@ -153,7 +140,6 @@ function md_render($text)
         }
     }
 
-    // Put the code back (a few passes, because a link text can contain inline code).
     for ($i = 0; $i < 3 && strpos($out, "\0") !== false; $i++) {
         $out = preg_replace_callback('/\0(\d+)\0/', function ($m) use ($hold) {
             return isset($hold[(int) $m[1]]) ? $hold[(int) $m[1]] : '';

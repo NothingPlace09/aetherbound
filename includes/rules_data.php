@@ -1,14 +1,4 @@
 <?php
-// STARTING rules only. They are copied into the database the first time the site runs (or after the upgrade to schema 4);
-// from then on the rules are edited in Admin → Rules and this file is no longer read.
-//
-// L('English text', 'Testo italiano') = one text in two languages (other languages show the English one).
-// Inside texts you can use **bold** to highlight key words.
-// Each category (Discord, Ban, Mute, Global, SMP) has "sections"; a section holds either
-//   'rules' => [ ['title' => L(..) (optional), 'text' => L(..)], ... ]      numbered automatically: 1.0, 1.1, 1.2 ...
-//   'table' => ['head' => [L(..), ...], 'rows' => [[L(..), L(..), ...], ...]]   (used by the durations)
-// 'updated' is the "last updated" date of the category (YYYY-MM-DD).
-
 if (!function_exists('L')) {
     function L($en, $it = null)
     {
@@ -16,7 +6,6 @@ if (!function_exists('L')) {
     }
 }
 
-/* Picks the visitor's language (English if that text has no translation). */
 function rl($v)
 {
     if (!is_array($v)) {

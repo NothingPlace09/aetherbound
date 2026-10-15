@@ -1,6 +1,4 @@
 <?php
-// Text editor with WRITE / PREVIEW tabs and formatting toolbar (driven by assets/js/editor.js).
-// $kind tells preview.php which length limit to use: "" = profile text, "news" = news post (admins only).
 function editor_box($id, $name, $value, $max, $csrf, $kind = '', $rows = 8)
 {
     $svg = function ($inner, $w = '2.2') {
@@ -11,7 +9,7 @@ function editor_box($id, $name, $value, $max, $csrf, $kind = '', $rows = 8)
     };
     ob_start();
     ?>
-      <div class="mdx" data-mdx data-kind="<?= e($kind) ?>" data-preview-url="preview.php" data-csrf="<?= e($csrf) ?>" data-loading="<?= e(t('ed_loading')) ?>" data-max="<?= (int) $max ?>">
+      <div class="mdx" data-mdx data-kind="<?= e($kind) ?>" data-preview-url="preview" data-csrf="<?= e($csrf) ?>" data-loading="<?= e(t('ed_loading')) ?>" data-max="<?= (int) $max ?>">
         <div class="mdx-top" role="tablist">
           <button type="button" class="mdx-tab" role="tab" data-mdx-tab="write" aria-selected="true"><?= e(t('ed_write')) ?></button>
           <button type="button" class="mdx-tab" role="tab" data-mdx-tab="preview" aria-selected="false"><?= e(t('ed_preview')) ?></button>
