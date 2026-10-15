@@ -1,9 +1,8 @@
 <?php
-// My profile: where members land after logging in or signing up.
 $page = 'profile';
 require __DIR__ . '/includes/bootstrap.php';
 require_once __DIR__ . '/includes/skin.php';
-ensure_session(true); // open the session before any output (CSRF token + flash messages)
+ensure_session(true);
 $me = require_login();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -21,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $anchor = '#public';
                     $max = $action === 'about' ? (int) $config['about_max'] : 120;
                     $raw = isset($_POST[$action]) ? (string) $_POST[$action] : '';
-                    if (mb_strlen($raw, 'UTF-8') > $max + 200) { // clearly too long, do not silently cut it
+                    if (mb_strlen($raw, 'UTF-8') > $max + 200) {
                         flash('err', 'err_text_long');
                         break;
                     }
@@ -79,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('err', 'err_db');
         }
     }
-    redirect('profile.php' . $anchor);
+    redirect('profile' . $anchor);
 }
 
 $pageTitle = t('pf_title');
@@ -100,7 +99,7 @@ $extraScripts = ['assets/js/editor.js'];
           <h1><?= e(t('pf_title')) ?></h1>
           <p><?= e(t('pf_sub')) ?></p>
         </div>
-        <a class="link-soft" href="user.php?u=<?= e(rawurlencode($me['username'])) ?>">
+        <a class="link-soft" href="user?u=<?= e(rawurlencode($me['username'])) ?>">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
           <?= e(t('pf_view_public')) ?>
         </a>
@@ -109,7 +108,6 @@ $extraScripts = ['assets/js/editor.js'];
 
     <?= flash_html() ?>
 
-    <!-- Summary card -->
     <div class="panel pcard">
       <?= avatar_img($me, 112, 'pavatar') ?>
       <div class="pinfo">
@@ -121,20 +119,19 @@ $extraScripts = ['assets/js/editor.js'];
         </div>
       </div>
       <?php if ($me['role'] === 'admin'): ?>
-        <a class="btn sm" href="admin.php"><?= e(t('nav_admin')) ?> →</a>
+        <a class="btn sm" href="admin"><?= e(t('nav_admin')) ?> →</a>
       <?php endif; ?>
     </div>
 
-    <!-- Public profile -->
     <div class="sec-title" id="public">
       <span class="sec-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
       <div><h3><?= e(t('pf_public')) ?></h3><p><?= e(t('pf_public_sub')) ?></p></div>
     </div>
 
-    <form class="panel" method="post" action="profile.php#public">
+    <form class="panel" method="post" action="profile#public">
       <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
       <h4 class="ptitle"><?= e(t('pf_about')) ?></h4>
-      <div class="mdx" data-mdx data-preview-url="preview.php" data-csrf="<?= e($csrf) ?>" data-loading="<?= e(t('ed_loading')) ?>" data-max="<?= (int) $config['about_max'] ?>">
+      <div class="mdx" data-mdx data-preview-url="preview" data-csrf="<?= e($csrf) ?>" data-loading="<?= e(t('ed_loading')) ?>" data-max="<?= (int) $config['about_max'] ?>">
         <div class="mdx-top" role="tablist">
           <button type="button" class="mdx-tab" role="tab" data-mdx-tab="write" aria-selected="true"><?= e(t('ed_write')) ?></button>
           <button type="button" class="mdx-tab" role="tab" data-mdx-tab="preview" aria-selected="false"><?= e(t('ed_preview')) ?></button>
@@ -167,7 +164,7 @@ $extraScripts = ['assets/js/editor.js'];
     </form>
 
     <div class="grid-2 public-grid">
-      <form class="panel" method="post" action="profile.php#public">
+      <form class="panel" method="post" action="profile#public">
         <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
         <h4 class="ptitle"><?= e(t('pf_signature')) ?></h4>
         <label class="sr" for="signature"><?= e(t('pf_signature')) ?></label>
@@ -189,20 +186,19 @@ $extraScripts = ['assets/js/editor.js'];
         <?php $skin = skin_lookup($me['username']); ?>
         <p class="skin-status <?= $skin['state'] ?>"><?= e(sprintf(t('sk_' . $skin['state']), $me['username'])) ?></p>
         <p class="hint"><?= e(t('pf_skin_hint')) ?></p>
-        <form method="post" action="profile.php#public" class="actions">
+        <form method="post" action="profile#public" class="actions">
           <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
           <button class="btn sm white" type="submit" name="action" value="skin_refresh"><?= e(t('sk_refresh')) ?></button>
         </form>
       </div>
     </div>
 
-    <!-- Security -->
     <div class="sec-title" id="security">
       <span class="sec-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8 7.5 9.5 4.4-1.5 7.5-4.9 7.5-9.5V6L12 3Z"/></svg></span>
       <div><h3><?= e(t('pf_security')) ?></h3><p><?= e(t('pf_security_sub')) ?></p></div>
     </div>
 
-    <form class="panel narrow" method="post" action="profile.php#security">
+    <form class="panel narrow" method="post" action="profile#security">
       <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
       <h4 class="ptitle"><?= e(t('pf_change_pw')) ?></h4>
       <label for="current_password"><?= e(t('f_current_pw')) ?></label>
@@ -235,7 +231,7 @@ $extraScripts = ['assets/js/editor.js'];
         <h4><?= e(t('pf_logout_t')) ?></h4>
         <p><?= e(t('pf_logout_p')) ?></p>
       </div>
-      <a class="btn sm danger" href="logout.php?t=<?= e($csrf) ?>"><?= e(t('nav_logout')) ?></a>
+      <a class="btn sm danger" href="logout?t=<?= e($csrf) ?>"><?= e(t('nav_logout')) ?></a>
     </div>
   </div>
 </main>

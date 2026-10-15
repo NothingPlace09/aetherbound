@@ -1,5 +1,4 @@
 <?php
-// Admin: write or edit a news post. Admins only.
 $page = 'admin';
 require __DIR__ . '/includes/bootstrap.php';
 require_once __DIR__ . '/includes/news.php';
@@ -18,7 +17,7 @@ if ($nid > 0) {
     $post = $st->fetch();
     if (!$post) {
         flash('err', 'err_notfound');
-        redirect('admin.php?tab=news');
+        redirect('admin?tab=news');
     }
 }
 
@@ -77,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ->execute([$form['title'], $form['excerpt'], $form['body'], $form['category'], $newImg, $form['published'], $me['id']]);
             }
             flash('ok', 'ok_news_saved');
-            redirect('admin.php?tab=news');
+            redirect('admin?tab=news');
         } catch (Exception $ex) {
             if ($newImg) {
                 news_image_delete($newImg);
@@ -101,13 +100,13 @@ $img = $post ? news_image_url($post) : null;
         <div>
           <h1><?= e(t($post ? 'ad_news_edit' : 'ad_news_new')) ?></h1>
         </div>
-        <a class="link-soft" href="admin.php?tab=news">← <?= e(t('ad_tab_news')) ?></a>
+        <a class="link-soft" href="admin?tab=news">← <?= e(t('ad_tab_news')) ?></a>
       </div>
     </div>
 
     <?php if ($error): ?><div class="flash err" role="alert"><?= e(t($error)) ?></div><?php endif; ?>
 
-    <form class="panel news-form" method="post" action="admin-news.php<?= $post ? '?id=' . $nid : '' ?>" enctype="multipart/form-data">
+    <form class="panel news-form" method="post" action="admin-news<?= $post ? '?id=' . $nid : '' ?>" enctype="multipart/form-data">
       <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
       <input type="hidden" name="MAX_FILE_SIZE" value="<?= NEWS_IMAGE_MAX ?>">
 
@@ -148,7 +147,7 @@ $img = $post ? news_image_url($post) : null;
 
       <div class="actions">
         <button class="btn sm" type="submit"><?= e(t('ad_news_save')) ?></button>
-        <a class="btn sm white" href="admin.php?tab=news"><?= e(t('btn_cancel')) ?></a>
+        <a class="btn sm white" href="admin?tab=news"><?= e(t('btn_cancel')) ?></a>
       </div>
     </form>
   </div>

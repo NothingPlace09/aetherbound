@@ -1,5 +1,4 @@
 <?php
-// Public profile: what other people see about a member. user.php?u=Username
 $page = 'user';
 require __DIR__ . '/includes/bootstrap.php';
 
@@ -30,7 +29,7 @@ $mine = $member && $user && (int) $user['id'] === (int) $member['id'];
     <section class="stub">
       <h1><?= e(t('pu_not_found')) ?></h1>
       <p><?= e(t('pu_not_found_p')) ?></p>
-      <a class="btn" href="index.php"><?= e(t('nav_home')) ?></a>
+      <a class="btn" href="home"><?= e(t('nav_home')) ?></a>
     </section>
 <?php else: ?>
     <div class="panel pcard public">
@@ -42,7 +41,7 @@ $mine = $member && $user && (int) $user['id'] === (int) $member['id'];
           <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><?= e(seen_text($member['last_seen_at'])) ?></span>
         </div>
       </div>
-      <?php if ($mine): ?><a class="btn sm" href="profile.php"><?= e(t('pu_edit')) ?></a><?php endif; ?>
+      <?php if ($mine): ?><a class="btn sm" href="profile"><?= e(t('pu_edit')) ?></a><?php endif; ?>
     </div>
 
     <div class="grid-2 public-grid">

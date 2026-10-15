@@ -15,7 +15,6 @@ $icons = [
     'mobile' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18h2"/></svg>',
     'pad'    => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="19" height="10" rx="5"/><path d="M8 10.5v3M6.5 12h3M16 11h.01M18 13h.01"/></svg>',
 ];
-// id => [label, icon, edition key, last step key, shows port]
 $platforms = [
     'java'   => ['Java (PC)',        'java',   'java',    's3_java',    false],
     'mobile' => ['Mobile',           'mobile', 'bedrock', 's3_mobile',  true],
@@ -134,7 +133,7 @@ $platforms = [
       <h2><?= e(t('staff_title')) ?></h2>
       <p><?= e(t('staff_sub')) ?></p>
     </div>
-    <a class="btn" href="staff.php">
+    <a class="btn" href="staff">
       <span><?= e(t('staff_btn')) ?></span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     </a>

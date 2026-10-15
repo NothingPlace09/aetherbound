@@ -1,6 +1,4 @@
 <?php
-// Staff applications: list of roles -> role page (requirements + rules) -> 4-step form -> Discord webhook.
-// The text of the roles is in includes/apply_data.php, the sending in includes/apply.php.
 $page = 'apply';
 $withBg = true;
 require __DIR__ . '/includes/bootstrap.php';
@@ -8,15 +6,29 @@ ensure_session(true);
 
 $user = current_user();
 $csrf = csrf_token();
-$roles = apply_roles();
-$role = isset($_GET['role']) && is_string($_GET['role']) ? apply_find_role($_GET['role']) : null;
+$tree = apply_tree();
+$role = null;
+$cat = null;
+$roleSlug = isset($_GET['role']) && is_string($_GET['role']) ? $_GET['role'] : '';
+$catSlug = isset($_GET['cat']) && is_string($_GET['cat']) ? $_GET['cat'] : '';
+foreach ($tree as $c) {
+    if ($roleSlug !== '') {
+        foreach ($c['roles'] as $r) {
+            if ($r['id'] === $roleSlug) {
+                $role = $r;
+                $cat = $c;
+            }
+        }
+    } elseif ($c['id'] === $catSlug) {
+        $cat = $c;
+    }
+}
 $open = apply_webhook_url() !== '';
 $errors = [];
 $old = [];
 $formError = '';
 $doneCode = '';
 
-// "Application sent" page
 if (isset($_GET['done']) && is_string($_GET['done']) && preg_match('/^[a-z0-9]{4}$/', $_GET['done']) && $user) {
     $st = db()->prepare('SELECT code FROM applications WHERE code = ? AND user_id = ?');
     $st->execute([$_GET['done'], (int) $user['id']]);
@@ -33,15 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $role) {
         if (!$errors) {
             list($ok, $res) = apply_submit($role, $old, $user);
             if ($ok) {
-                header('Location: apply.php?done=' . $res);
+                header('Location: apply?done=' . $res);
                 exit;
             }
             $formError = $res;
         }
     }
-    // keep what the person typed
     if (!$old) {
-        $old = ['nickname' => apply_field('nickname', 16), 'premium' => '', 'age' => '', 'tz' => '', 'avail' => [], 'about' => '', 'answers' => []];
+        $old = ['nickname' => apply_field('nickname', 16), 'discord' => '', 'premium' => '', 'age' => '', 'tz' => '', 'avail' => [], 'about' => '', 'answers' => []];
     }
 }
 $val = function ($k, $default = '') use ($old) { return isset($old[$k]) ? $old[$k] : $default; };
@@ -64,18 +75,39 @@ require __DIR__ . '/includes/header.php';
       <h2><?= e(t('ap_done_title')) ?></h2>
       <p><?= e(t('ap_done_text')) ?></p>
       <p class="ap-code"><?= e(t('ap_done_id')) ?> <strong><?= e($doneCode) ?></strong></p>
-      <a class="btn sm white" href="apply.php"><?= e(t('ap_done_back')) ?></a>
+      <a class="btn sm white" href="apply"><?= e(t('ap_done_back')) ?></a>
     </div>
+
+<?php elseif (!$role && !$cat): ?>
+    <?php if (!$tree): ?>
+      <div class="panel empty-panel"><?= e(t('ap_no_cats')) ?></div>
+    <?php else: ?>
+      <div class="ap-cats">
+<?php foreach ($tree as $c): ?>
+        <article class="panel ap-cat">
+          <span class="ap-ic big"><?= page_icon($c['icon'], 34) ?></span>
+          <span class="badge ap-tag"><?= e(ap_t($c['tag'])) ?></span>
+          <h2><?= e(ap_t($c['title'])) ?></h2>
+          <p><?= e(ap_t($c['desc'])) ?></p>
+          <a class="btn" href="apply?cat=<?= e($c['id']) ?>"><?= e(sprintf(t('ap_view_roles'), ap_t($c['short']))) ?> <?= page_icon('next', 14) ?></a>
+        </article>
+<?php endforeach; ?>
+      </div>
+    <?php endif; ?>
 
 <?php elseif (!$role): ?>
+    <div class="ap-top">
+      <a class="btn sm white" href="apply"><?= page_icon('back', 14) ?> <?= e(t('ap_back')) ?></a>
+    </div>
     <div class="ap-head">
-      <span class="ap-ic"><?= page_icon('users', 24) ?></span>
-      <div><h2><?= e(t('ap_list_title')) ?></h2><p><?= e(t('ap_list_sub')) ?></p></div>
+      <span class="ap-ic"><?= page_icon($cat['icon'], 24) ?></span>
+      <div><h2><?= e(ap_t($cat['title'])) ?></h2><p><?= e(ap_t($cat['desc'])) ?></p></div>
     </div>
     <?php if (!$open): ?><div class="flash warn"><?= e(t('ap_closed')) ?></div><?php endif; ?>
+    <?php if (!$cat['roles']): ?><div class="panel empty-panel"><?= e(t('ap_no_roles')) ?></div><?php endif; ?>
 
     <div class="ap-grid">
-<?php foreach ($roles as $r): ?>
+<?php foreach ($cat['roles'] as $r): ?>
       <article class="panel ap-card">
         <span class="ap-ic"><?= page_icon($r['icon'], 24) ?></span>
         <h3><?= e(ap_t($r['title'])) ?></h3>
@@ -87,14 +119,14 @@ require __DIR__ . '/includes/header.php';
           <li><?= page_icon('star', 16) ?><span class="md"><?= md_render(ap_t($q)) ?></span></li>
 <?php endforeach; ?>
         </ul>
-        <a class="btn" href="apply.php?role=<?= e($r['id']) ?>"><?= e(sprintf(t('ap_apply_as'), ap_t($r['title']))) ?></a>
+        <a class="btn" href="apply?role=<?= e($r['id']) ?>"><?= e(sprintf(t('ap_apply_as'), ap_t($r['title']))) ?></a>
       </article>
 <?php endforeach; ?>
     </div>
 
 <?php else: ?>
     <div class="ap-top">
-      <a class="btn sm white" href="apply.php"><?= page_icon('back', 14) ?> <?= e(t('ap_back')) ?></a>
+      <a class="btn sm white" href="apply?cat=<?= e($cat['id']) ?>"><?= page_icon('back', 14) ?> <?= e(t('ap_back')) ?></a>
       <div class="ap-role"><span class="ap-ic sm"><?= page_icon($role['icon'], 18) ?></span><strong><?= e(ap_t($role['title'])) ?></strong></div>
     </div>
 
@@ -121,18 +153,17 @@ require __DIR__ . '/includes/header.php';
 <?php if (!$user): ?>
     <div class="panel ap-login">
       <p><?= e(t('ap_login_needed')) ?></p>
-      <a class="btn" href="login.php"><?= e(t('nav_login')) ?></a>
+      <a class="btn" href="login"><?= e(t('nav_login')) ?></a>
     </div>
 <?php elseif (!$open): ?>
     <div class="flash warn"><?= e(t('ap_closed')) ?></div>
 <?php else: ?>
-    <form class="panel ap-form" method="post" action="apply.php?role=<?= e($role['id']) ?>" data-apply data-avail-error="<?= e(t('ap_e_avail')) ?>" novalidate>
+    <form class="panel ap-form" method="post" action="apply?role=<?= e($role['id']) ?>" data-apply data-avail-error="<?= e(t('ap_e_avail')) ?>" novalidate>
       <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
       <h2><?= e(t('ap_form_title')) ?> <span class="ap-hl">&mdash; <?= e(ap_t($role['title'])) ?></span></h2>
       <div class="ap-prog" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       <?php if ($formError !== ''): ?><div class="flash err" role="alert"><?= e($formError) ?></div><?php endif; ?>
 
-      <!-- Step 1 -->
       <section class="ap-step" data-step="1">
         <h3><?= e(t('ap_s1_title')) ?></h3>
         <p class="ap-lead"><?= e(t('ap_s1_sub')) ?></p>
@@ -142,6 +173,13 @@ require __DIR__ . '/includes/header.php';
           <p class="ap-help"><?= e(t('ap_nick_help')) ?></p>
           <input id="f-nickname" name="nickname" type="text" maxlength="16" required pattern="[A-Za-z0-9_]{3,16}" autocomplete="off" value="<?= e($val('nickname', isset($_POST['nickname']) ? '' : $user['username'])) ?>">
           <?= $err('nickname') ?>
+        </div>
+
+        <div class="ap-q">
+          <label for="f-discord"><?= e(t('ap_discord')) ?> <b>*</b></label>
+          <p class="ap-help"><?= e(t('ap_discord_help')) ?></p>
+          <input id="f-discord" name="discord" type="text" maxlength="37" required pattern="[A-Za-z0-9_.]{2,32}(#[0-9]{4})?" autocomplete="off" placeholder="username" value="<?= e($val('discord')) ?>">
+          <?= $err('discord') ?>
         </div>
 
         <fieldset class="ap-q">
@@ -170,7 +208,6 @@ require __DIR__ . '/includes/header.php';
         </div>
       </section>
 
-      <!-- Step 2 -->
       <section class="ap-step" data-step="2">
         <h3><?= e(t('ap_s2_title')) ?></h3>
         <p class="ap-lead"><?= e(t('ap_avail_help')) ?></p>
@@ -190,7 +227,6 @@ foreach (APPLY_DAYS as $d => $dayName): $picked = isset($old['avail'][$d]) ? $ol
         </div>
       </section>
 
-      <!-- Step 3 -->
       <section class="ap-step" data-step="3">
         <h3><?= e(t('ap_s3_title')) ?></h3>
         <p class="ap-lead"><?= e(t('ap_s3_sub')) ?></p>
@@ -218,7 +254,6 @@ foreach (APPLY_DAYS as $d => $dayName): $picked = isset($old['avail'][$d]) ? $ol
 <?php endforeach; ?>
       </section>
 
-      <!-- Step 4 -->
       <section class="ap-step" data-step="4">
         <h3><?= e(t('ap_s4_title')) ?></h3>
         <p class="ap-lead"><?= e(t('ap_s4_sub')) ?></p>

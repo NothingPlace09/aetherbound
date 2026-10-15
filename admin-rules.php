@@ -1,5 +1,4 @@
 <?php
-// Admin: create and edit one rules category (its sections and rules). Admins only.
 $page = 'admin';
 require __DIR__ . '/includes/bootstrap.php';
 ensure_session(true);
@@ -14,12 +13,11 @@ if ($cid > 0) {
     $cat = $st->fetch();
     if (!$cat) {
         flash('err', 'err_notfound');
-        redirect('admin.php?tab=rules');
+        redirect('admin?tab=rules');
     }
 }
-$self = 'admin-rules.php' . ($cat ? '?id=' . $cid : '');
+$self = 'admin-rules' . ($cat ? '?id=' . $cid : '');
 
-/* A text field from the form: trimmed, limited in length, single line unless $multi. */
 function rf($key, $max, $multi = false)
 {
     $v = clean_text(isset($_POST[$key]) && is_string($_POST[$key]) ? $_POST[$key] : '', $max);
@@ -62,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->prepare("INSERT INTO rule_cats (slug, grp_en, grp_it, title_en, title_it, sub_en, sub_it, icon, sort, updated_at) VALUES (?,?,?,?,?,?,?,?,?, datetime('now'))")
                     ->execute([rules_slug($pdo, $title), rf('grp_en', 40), rf('grp_it', 40), $title, rf('title_it', 60), rf('sub_en', 200), rf('sub_it', 200), $icon, rf_order('sort', $max + 10)]);
                 flash('ok', 'ok_rules_saved');
-                redirect('admin-rules.php?id=' . (int) $pdo->lastInsertId());
+                redirect('admin-rules?id=' . (int) $pdo->lastInsertId());
             }
         } elseif ($cat) {
             $sid = isset($_POST['sec_id']) ? (int) $_POST['sec_id'] : 0;
@@ -134,7 +132,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect($self . $anchor);
 }
 
-/* ---- Data for the page ---- */
 $secs = [];
 $items = [];
 if ($cat) {
@@ -149,7 +146,6 @@ if ($cat) {
 }
 $v = $cat ? $cat : ['grp_en' => '', 'grp_it' => '', 'title_en' => '', 'title_it' => '', 'sub_en' => '', 'sub_it' => '', 'icon' => 'shield', 'sort' => ''];
 
-/* Small helpers for the form markup */
 function ar_hidden($csrf, $action, array $more = [])
 {
     $h = '<input type="hidden" name="csrf" value="' . e($csrf) . '"><input type="hidden" name="action" value="' . e($action) . '">';
@@ -177,8 +173,8 @@ require __DIR__ . '/includes/header.php';
       <div class="head-row">
         <div><h1><?= e($cat ? $cat['title_en'] : t('ar_new_cat')) ?></h1></div>
         <div class="head-links">
-          <?php if ($cat): ?><a class="link-soft" href="rules.php#r-<?= e($cat['slug']) ?>"><?= e(t('ar_view_page')) ?> →</a><?php endif; ?>
-          <a class="link-soft" href="admin.php?tab=rules">← <?= e(t('ad_tab_rules')) ?></a>
+          <?php if ($cat): ?><a class="link-soft" href="rules#r-<?= e($cat['slug']) ?>"><?= e(t('ar_view_page')) ?> →</a><?php endif; ?>
+          <a class="link-soft" href="admin?tab=rules">← <?= e(t('ad_tab_rules')) ?></a>
         </div>
       </div>
     </div>

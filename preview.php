@@ -1,5 +1,4 @@
 <?php
-// Live preview for the profile editor: returns the formatted HTML of the text sent by a logged-in member.
 require __DIR__ . '/includes/bootstrap.php';
 ensure_session(true);
 header('Content-Type: text/html; charset=utf-8');
@@ -9,7 +8,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !current_user() || !csrf_ok(isset($
     http_response_code(403);
     exit;
 }
-// News posts (admins only) may be much longer than a profile text.
 $max = (int) $config['about_max'];
 if (isset($_POST['kind']) && $_POST['kind'] === 'news') {
     $u = current_user();

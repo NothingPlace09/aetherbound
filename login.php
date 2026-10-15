@@ -2,10 +2,10 @@
 $page = 'login';
 $withBg = true;
 require __DIR__ . '/includes/bootstrap.php';
-ensure_session(true); // open the session before any output (CSRF token + throttle)
+ensure_session(true);
 
 if (current_user()) {
-    header('Location: profile.php');
+    header('Location: profile');
     exit;
 }
 
@@ -27,11 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $st = db()->prepare('SELECT id, password_hash FROM users WHERE email = ?');
             $st->execute([$email]);
             $row = $st->fetch();
-            // Always do one hash operation so response time does not reveal whether the email exists.
             $hash = $row ? $row['password_hash'] : password_hash('placeholder', PASSWORD_DEFAULT);
             if (password_verify($password, $hash) && $row) {
                 login_user($row['id']);
-                header('Location: profile.php');
+                header('Location: profile');
                 exit;
             }
             auth_fail();
@@ -64,7 +63,7 @@ $discordShort = preg_replace('~^https?://~', '', $config['discord_url']);
       </button>
       <div class="or"><span><?= e(t('auth_or')) ?></span></div>
 
-      <form method="post" action="login.php" novalidate>
+      <form method="post" action="login" novalidate>
         <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
         <label for="email"><?= e(t('f_email')) ?></label>
         <input id="email" name="email" type="email" autocomplete="email" required value="<?= e($email) ?>">
@@ -88,7 +87,7 @@ $discordShort = preg_replace('~^https?://~', '', $config['discord_url']);
         </div>
       </div>
 
-      <p class="auth-foot"><?= e(t('no_account')) ?> <a href="register.php"><?= e(t('nav_signup')) ?></a></p>
+      <p class="auth-foot"><?= e(t('no_account')) ?> <a href="register"><?= e(t('nav_signup')) ?></a></p>
     </div>
   </section>
 </main>

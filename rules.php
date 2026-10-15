@@ -1,6 +1,4 @@
 <?php
-// Rules: category menu on the left, rules of the chosen category on the right.
-// The text lives in includes/rules_data.php.
 $page = 'rules';
 $withBg = true;
 require __DIR__ . '/includes/bootstrap.php';

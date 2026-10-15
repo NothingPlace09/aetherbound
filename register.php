@@ -2,10 +2,10 @@
 $page = 'login';
 $withBg = true;
 require __DIR__ . '/includes/bootstrap.php';
-ensure_session(true); // open the session before any output (CSRF token + throttle)
+ensure_session(true);
 
 if (current_user()) {
-    header('Location: profile.php');
+    header('Location: profile');
     exit;
 }
 
@@ -36,11 +36,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $st = $pdo->prepare('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)');
             $st->execute([$username, $email, password_hash($password, PASSWORD_DEFAULT)]);
             login_user((int) $pdo->lastInsertId());
-            header('Location: profile.php');
+            header('Location: profile');
             exit;
         } catch (PDOException $ex) {
             auth_fail();
-            // 23000 = UNIQUE constraint (username or email already used)
             $error = $ex->getCode() === '23000' ? t('err_taken') : t('err_db');
         } catch (Exception $ex) {
             $error = t('err_db');
@@ -69,7 +68,7 @@ require __DIR__ . '/includes/header.php';
       </button>
       <div class="or"><span><?= e(t('auth_or')) ?></span></div>
 
-      <form method="post" action="register.php" novalidate>
+      <form method="post" action="register" novalidate>
         <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
         <label for="username"><?= e(t('f_username')) ?></label>
         <input id="username" name="username" type="text" autocomplete="username" maxlength="16" required value="<?= e($username) ?>">
@@ -90,7 +89,7 @@ require __DIR__ . '/includes/header.php';
         <button type="submit" class="btn block"><?= e(t('btn_create')) ?></button>
       </form>
 
-      <p class="auth-foot"><?= e(t('have_account')) ?> <a href="login.php"><?= e(t('nav_login')) ?></a></p>
+      <p class="auth-foot"><?= e(t('have_account')) ?> <a href="login"><?= e(t('nav_login')) ?></a></p>
     </div>
   </section>
 </main>

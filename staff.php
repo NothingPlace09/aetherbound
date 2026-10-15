@@ -1,5 +1,4 @@
 <?php
-// Staff page: every member whose role is of type "staff", grouped by role and ordered by role priority.
 $page = 'staff';
 require __DIR__ . '/includes/bootstrap.php';
 
@@ -39,7 +38,7 @@ require __DIR__ . '/includes/header.php';
       </h2>
       <div class="staff-grid">
       <?php foreach ($g['members'] as $m): ?>
-        <a class="staff-card" href="user.php?u=<?= e(rawurlencode($m['username'])) ?>">
+        <a class="staff-card" href="user?u=<?= e(rawurlencode($m['username'])) ?>">
           <span class="badge" style="--bc:<?= e($g['color']) ?>"><?= e($g['name']) ?></span>
           <?= avatar_img($m, 64, 'staff-face') ?>
           <strong class="staff-name"><?= e($m['username']) ?></strong>

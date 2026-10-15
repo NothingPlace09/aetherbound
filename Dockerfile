@@ -1,4 +1,3 @@
-# Aetherbound site for Coolify (Build Pack: Dockerfile). Apache + PHP 8.3 with gd, curl, pdo_sqlite.
 FROM php:8.3-apache
 
 RUN apt-get update \
