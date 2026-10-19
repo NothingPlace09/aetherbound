@@ -23,7 +23,7 @@ function skin_http($url, $timeout = 4)
             CURLOPT_CONNECTTIMEOUT => 3,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_MAXREDIRS      => 3,
-            CURLOPT_USERAGENT      => 'AetherboundSite/1.0',
+            CURLOPT_USERAGENT      => 'WaveMCSite/1.0',
         ]);
         $body = curl_exec($ch);
         $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -31,7 +31,7 @@ function skin_http($url, $timeout = 4)
         return [$body === false ? 0 : $code, $body === false ? '' : (string) $body];
     }
     if (ini_get('allow_url_fopen')) {
-        $ctx = stream_context_create(['http' => ['timeout' => $timeout, 'ignore_errors' => true, 'header' => "User-Agent: AetherboundSite/1.0\r\n"]]);
+        $ctx = stream_context_create(['http' => ['timeout' => $timeout, 'ignore_errors' => true, 'header' => "User-Agent: WaveMCSite/1.0\r\n"]]);
         $body = @file_get_contents($url, false, $ctx);
         $code = 0;
         if (isset($http_response_header[0]) && preg_match('~\s(\d{3})\s~', $http_response_header[0], $m)) {

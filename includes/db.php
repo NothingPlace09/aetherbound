@@ -57,7 +57,7 @@ function db_migrate(PDO $pdo)
         $pdo->exec('CREATE TABLE IF NOT EXISTS roles (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
             name       TEXT NOT NULL UNIQUE COLLATE NOCASE,
-            color      TEXT NOT NULL DEFAULT \'#ff6aa8\',
+            color      TEXT NOT NULL DEFAULT \'#12a8f5\',
             kind       TEXT NOT NULL DEFAULT \'public\',
             priority   INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP

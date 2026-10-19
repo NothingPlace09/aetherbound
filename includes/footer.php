@@ -2,7 +2,7 @@
   <div class="wrap">
     <div class="foot">
       <div>
-        <div class="logo"><img class="avatar" src="assets/img/head.webp" alt="" width="38" height="38"><span>AETHER<b>BOUND</b>SMP</span></div>
+        <div class="logo"><img class="avatar" src="assets/img/head.webp" alt="" width="38" height="38"><span><b>WAVE</b>MC</span></div>
         <p><?= e(t('foot_tag')) ?></p>
         <button type="button" class="btn sm" data-copy><?= e($config['server_ip']) ?></button>
       </div>
@@ -28,10 +28,10 @@
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
-window.AETHER = <?= json_encode([
+window.WAVE = <?= json_encode([
     'ip'       => $config['server_ip'],
-    'copied'   => t('copied'),
-    'copyfail' => t('copyfail'),
+    'copied'   => sprintf(t('copied'), $config['server_ip']),
+    'copyfail' => sprintf(t('copyfail'), $config['server_ip']),
     'soon'     => t('discord_soon'),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?>;
 </script>

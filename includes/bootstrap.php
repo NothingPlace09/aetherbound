@@ -87,12 +87,12 @@ function discord_stats(array $config)
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => 3,
-            CURLOPT_USERAGENT      => 'AetherboundSite/1.0',
+            CURLOPT_USERAGENT      => 'WaveMCSite/1.0',
         ]);
         $raw = curl_exec($ch);
         curl_close($ch);
     } elseif (ini_get('allow_url_fopen')) {
-        $ctx = stream_context_create(['http' => ['timeout' => 3, 'header' => "User-Agent: AetherboundSite/1.0\r\n"]]);
+        $ctx = stream_context_create(['http' => ['timeout' => 3, 'header' => "User-Agent: WaveMCSite/1.0\r\n"]]);
         $raw = @file_get_contents($url, false, $ctx);
     }
 
@@ -131,7 +131,7 @@ function role_badges(array $u)
         $out .= '<span class="badge admin">' . e(t('role_admin')) . '</span>';
     }
     if (!empty($u['role_name'])) {
-        $color = (!empty($u['role_color']) && preg_match('/^#[0-9a-fA-F]{6}$/', $u['role_color'])) ? $u['role_color'] : '#ff6aa8';
+        $color = (!empty($u['role_color']) && preg_match('/^#[0-9a-fA-F]{6}$/', $u['role_color'])) ? $u['role_color'] : '#12a8f5';
         $out .= '<span class="badge" style="--bc:' . $color . '">' . e($u['role_name']) . '</span>';
     }
     return $out;

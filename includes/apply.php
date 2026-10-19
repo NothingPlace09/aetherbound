@@ -316,7 +316,7 @@ function apply_embeds(array $role, array $v, array $user, $discordId, $code, $ts
 
     $embeds = [];
     foreach ($chunks as $i => $c) {
-        $e = ['description' => mb_substr($c, 0, 4000, 'UTF-8'), 'color' => 0xE8387F];
+        $e = ['description' => mb_substr($c, 0, 4000, 'UTF-8'), 'color' => 0x12A8F5];
         if ($i === 0) {
             $e['title'] = "\u{1F4CB} " . $role['cat_short']['en'] . ' Application - ' . $role['title']['en'];
         }
@@ -404,7 +404,7 @@ function apply_submit(array $role, array $v, array $user)
     $discordId = preg_match('/^\d{15,22}$/', $discordId) ? $discordId : '';
 
     $status = apply_webhook_post($url, [
-        'username'         => 'AetherBound Applications',
+        'username'         => 'WaveMC Applications',
         'embeds'           => apply_embeds($role, $v, $user, $discordId, $code, time()),
         'allowed_mentions' => ['parse' => []],
     ]);

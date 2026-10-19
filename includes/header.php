@@ -13,7 +13,7 @@ $user = current_user();
 <meta property="og:title" content="<?= e($title) ?>">
 <meta property="og:description" content="<?= e(t('lead')) ?>">
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#130a1b">
+<meta name="theme-color" content="#071a33">
 <link rel="icon" type="image/png" href="assets/img/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,12 +21,30 @@ $user = current_user();
 <link rel="stylesheet" href="<?= e(asset_url('assets/css/style.css')) ?>">
 </head>
 <body>
-<script>try{if(sessionStorage.getItem("aeth_pre")){document.documentElement.classList.add("no-preload");}}catch(e){}</script>
-<noscript><style>#preloader{display:none}</style></noscript>
-<div id="preloader" aria-hidden="true">
-  <div class="pre-core">
+<noscript><style>.wm-loader{display:none}</style></noscript>
+<div id="wm-loader" class="wm-loader" aria-hidden="true">
+  <div class="wm-falls">
+    <i style="--x:2%;--w:18px;--t:2.05s;--d:-0.79s"></i>
+    <i style="--x:8%;--w:10px;--t:1.17s;--d:-1.07s"></i>
+    <i style="--x:14%;--w:18px;--t:1.68s;--d:-1.82s"></i>
+    <i style="--x:21%;--w:14px;--t:1.14s;--d:-0.87s"></i>
+    <i style="--x:27%;--w:10px;--t:1.34s;--d:-1.1s"></i>
+    <i style="--x:33%;--w:10px;--t:1.93s;--d:-0.25s"></i>
+    <i style="--x:39%;--w:14px;--t:1.73s;--d:-1.17s"></i>
+    <i style="--x:45%;--w:10px;--t:1.68s;--d:-0.79s"></i>
+    <i style="--x:51%;--w:14px;--t:1.15s;--d:-1.72s"></i>
+    <i style="--x:57%;--w:18px;--t:1.52s;--d:-1.08s"></i>
+    <i style="--x:63%;--w:26px;--t:1.41s;--d:-1.63s"></i>
+    <i style="--x:69%;--w:14px;--t:1.2s;--d:-1.14s"></i>
+    <i style="--x:75%;--w:14px;--t:1.47s;--d:-1.1s"></i>
+    <i style="--x:81%;--w:10px;--t:1.66s;--d:-1.24s"></i>
+    <i style="--x:87%;--w:22px;--t:1.78s;--d:-0.86s"></i>
+    <i style="--x:93%;--w:18px;--t:1.57s;--d:-1.85s"></i>
+  </div>
+  <div class="wm-pool"><span></span><span></span></div>
+  <div class="wm-core">
     <img src="assets/img/logo.webp" alt="" width="698" height="358">
-    <div class="pre-bar"><i></i></div>
+    <div class="wm-bar"><i></i></div>
   </div>
 </div>
 
@@ -39,7 +57,7 @@ $user = current_user();
 <div class="nav-wrap" id="navwrap">
   <div class="nav-box" id="navbox">
     <nav class="nav" id="nav" aria-label="Main">
-      <a class="brand" href="home" aria-label="<?= e($config['site_name']) ?>"><img class="avatar" src="assets/img/head.webp" alt="" width="34" height="34"><span>AETHER<b>BOUND</b></span></a>
+      <a class="brand" href="home" aria-label="<?= e($config['site_name']) ?>"><img class="avatar" src="assets/img/head.webp" alt="" width="34" height="34"><span><b>WAVE</b>MC</span></a>
       <div class="links" id="links">
         <?php foreach ($config['pages'] as $key => $item): ?>
           <a href="<?= e($item[0]) ?>"<?= $key === $page ? ' aria-current="page"' : '' ?>><?= e(t($item[1])) ?></a>

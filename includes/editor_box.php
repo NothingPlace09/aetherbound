@@ -27,14 +27,14 @@ function editor_box($id, $name, $value, $max, $csrf, $kind = '', $rows = 8)
           <?= $btn('h2', 'ed_heading', 'H2') ?>
           <?= $btn('h3', 'ed_heading', 'H3') ?>
           <button type="button" class="mdx-color" data-cmd="color" title="<?= e(t('ed_color')) ?>" aria-label="<?= e(t('ed_color')) ?>"><i></i></button>
-          <input type="color" class="sr" value="#ff6aa8" data-mdx-color tabindex="-1" aria-hidden="true">
+          <input type="color" class="sr" value="#12a8f5" data-mdx-color tabindex="-1" aria-hidden="true">
           <?= $btn('icon', 'ed_icon', $svg('<circle cx="12" cy="12" r="9"/><path d="M8.5 14a4 4 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/>')) ?>
           <?= $btn('hr', 'ed_hr', $svg('<path d="M5 12h14"/>', '2.6')) ?>
         </div>
         <div class="mdx-icons" data-mdx-icons hidden>
           <div class="mdx-icolor">
             <label for="<?= e($id) ?>-ic"><?= e(t('ed_icon_color')) ?></label>
-            <input type="color" id="<?= e($id) ?>-ic" value="#ff6aa8" data-icon-color>
+            <input type="color" id="<?= e($id) ?>-ic" value="#12a8f5" data-icon-color>
             <button type="button" class="mdx-icolor-off" data-icon-nocolor hidden><?= e(t('ed_icon_nocolor')) ?></button>
           </div>
           <?php foreach (md_icons() as $iname => $ipath): ?>

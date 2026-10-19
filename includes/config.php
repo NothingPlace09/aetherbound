@@ -1,6 +1,6 @@
 <?php
 return [
-    'site_name'    => 'AetherboundSMP',
+    'site_name'    => 'WaveMC',
     'server_ip'    => 'play.aetherbound.bond',
     'bedrock_port' => '19132',
     'discord_url'  => 'https://discord.gg/aetherboundsmp',
