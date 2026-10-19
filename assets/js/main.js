@@ -1,21 +1,61 @@
 (function () {
-  var cfg = window.AETHER || {};
+  var cfg = window.WAVE || {};
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  var pre = document.getElementById("preloader");
-  if (pre) {
-    var t0 = Date.now(), closed = false;
-    var closePre = function () {
-      if (closed) return;
-      closed = true;
+  var loader = document.getElementById("wm-loader");
+  if (loader) {
+    var minShow = reduce ? 120 : 750;
+    var finished = false;
+    var openLoader = function () {
+      if (finished) return;
+      finished = true;
+      var wait = Math.max(0, minShow - (window.performance && performance.now ? performance.now() : minShow));
       setTimeout(function () {
-        pre.classList.add("done");
-        try { sessionStorage.setItem("aeth_pre", "1"); } catch (e) {}
-        setTimeout(function () { if (pre.parentNode) pre.parentNode.removeChild(pre); }, 800);
-      }, Math.max(0, 1300 - (Date.now() - t0)));
+        loader.classList.remove("is-reset", "is-in");
+        loader.classList.add("is-done");
+      }, wait);
     };
-    if (document.readyState === "complete") closePre(); else window.addEventListener("load", closePre);
-    setTimeout(closePre, 5000);
+    if (document.readyState === "complete") openLoader(); else window.addEventListener("load", openLoader);
+    setTimeout(openLoader, 4000);
+
+    var closeLoader = function () {
+      loader.classList.remove("is-reset", "is-in");
+      loader.classList.add("is-done");
+    };
+    var coverPage = function () {
+      loader.classList.remove("is-done");
+      loader.classList.add("is-reset");
+      void loader.offsetWidth;
+      loader.classList.add("is-in");
+      setTimeout(closeLoader, 8000);
+    };
+
+    window.addEventListener("pageshow", function (e) {
+      if (e.persisted) closeLoader();
+    });
+
+    document.addEventListener("click", function (e) {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var a = e.target.closest ? e.target.closest("a[href]") : null;
+      if (!a || reduce) return;
+      if ((a.target && a.target !== "_self") || a.hasAttribute("download") || a.hasAttribute("data-no-loader")) return;
+      var raw = a.getAttribute("href");
+      if (!raw || raw.charAt(0) === "#" || /^(mailto:|tel:|javascript:)/i.test(raw)) return;
+      var u;
+      try { u = new URL(a.href, location.href); } catch (err) { return; }
+      if (u.origin !== location.origin) return;
+      if (u.pathname === location.pathname && u.search === location.search && u.hash) return;
+      e.preventDefault();
+      coverPage();
+      setTimeout(function () { location.href = u.href; }, 520);
+    });
+
+    document.addEventListener("submit", function (e) {
+      if (e.defaultPrevented || reduce) return;
+      var f = e.target;
+      if (!f || (f.target && f.target !== "_self") || f.hasAttribute("data-no-loader")) return;
+      coverPage();
+    });
   }
 
   var toastEl = document.getElementById("toast"), tt;
@@ -166,8 +206,14 @@
         d.y -= d.v; d.s += 0.012; d.x += Math.sin(d.s) * 0.3;
         if (d.y < -10) dots[i] = make(false);
         ctx.globalAlpha = 0.25 + 0.4 * Math.abs(Math.sin(d.s));
-        ctx.fillStyle = d.w ? "#ffffff" : "#ff6aa8";
-        ctx.fillRect(d.x, d.y, d.r * 1.6, d.r * 1.6);
+        ctx.fillStyle = d.w ? "#ffffff" : "#7fd4ff";
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r * 1.5, 0, 6.2832);
+        ctx.fill();
+        ctx.globalAlpha *= 0.55;
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1;
+        ctx.stroke();
       }
       requestAnimationFrame(tick);
     })();
