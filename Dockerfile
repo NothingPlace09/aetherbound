@@ -8,8 +8,8 @@ RUN apt-get update \
  && cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
  && rm -rf /var/lib/apt/lists/*
 
-COPY docker/site.conf /etc/apache2/conf-available/aetherbound.conf
-RUN a2enconf aetherbound
+COPY docker/site.conf /etc/apache2/conf-available/wavemc.conf
+RUN a2enconf wavemc
 
 COPY . /var/www/html/
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh

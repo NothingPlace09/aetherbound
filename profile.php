@@ -149,7 +149,7 @@ $extraScripts = ['assets/js/editor.js'];
           <button type="button" data-cmd="h2" title="<?= e(t('ed_heading')) ?> 2" aria-label="<?= e(t('ed_heading')) ?> 2">H2</button>
           <button type="button" data-cmd="h3" title="<?= e(t('ed_heading')) ?> 3" aria-label="<?= e(t('ed_heading')) ?> 3">H3</button>
           <button type="button" class="mdx-color" data-cmd="color" title="<?= e(t('ed_color')) ?>" aria-label="<?= e(t('ed_color')) ?>"><i></i></button>
-          <input type="color" class="sr" value="#ff6aa8" data-mdx-color tabindex="-1" aria-hidden="true">
+          <input type="color" class="sr" value="#12a8f5" data-mdx-color tabindex="-1" aria-hidden="true">
           <button type="button" data-cmd="hr" title="<?= e(t('ed_hr')) ?>" aria-label="<?= e(t('ed_hr')) ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
         </div>
         <label class="sr" for="about"><?= e(t('pf_about')) ?></label>

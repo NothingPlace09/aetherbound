@@ -43,7 +43,7 @@ $platforms = [
 
   <div class="wrap">
     <div class="banner">
-      <div class="banner-art"><img src="assets/img/head.webp" alt="Aetherbound explorer with binoculars"></div>
+      <div class="banner-art"><img src="assets/img/head.webp" alt="WaveMC dolphin mascot"></div>
       <div>
         <span class="tag"><i></i><span><?= e(t('tag')) ?></span></span>
         <h2><?= e(t('banner_title')) ?></h2>

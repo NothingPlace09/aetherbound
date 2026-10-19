@@ -11,7 +11,7 @@ try {
     foreach ($rows as $row) {
         $rid = (int) $row['rid'];
         if (!isset($groups[$rid])) {
-            $color = preg_match('/^#[0-9a-fA-F]{6}$/', $row['role_color']) ? $row['role_color'] : '#ff6aa8';
+            $color = preg_match('/^#[0-9a-fA-F]{6}$/', $row['role_color']) ? $row['role_color'] : '#12a8f5';
             $groups[$rid] = ['name' => $row['role_name'], 'color' => $color, 'members' => []];
         }
         $groups[$rid]['members'][] = $row;
